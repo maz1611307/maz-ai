@@ -1,12 +1,8 @@
 {
   "name": "maz-ai",
   "version": "1.0.0",
-  "description": "MAZ AI Web App",
   "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "dependencies": {
-    "node-fetch": "^2.6.7"
+    "express": "^4.19.2"
   }
 }
