@@ -12,6 +12,27 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+app.post('/api/chat', async (req, res) => {
+    try {
+        const { message } = req.body;
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: message }] }]
+            })
+        });
+        const data = await response.json();
+        const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response received.";
+        res.json({ reply: replyText });
+    } catch (error) {
+        res.status(500).json({ reply: "Error connecting to AI service." });
+    }
+});
+
+// Replace this string with your actual Supabase connection URL from earlier
+const DATABASE_URL = "postgresql://postgres:maz_1611%40Ali@db.ggmbxaklicgoczqwrepe.supabase.co:5432/postgres";
+
 // Replace this string with your actual Supabase connection URL from earlier
 const DATABASE_URL = "postgresql://postgres:maz_1611%40Ali@db.ggmbxaklicgoczqwrepe.supabase.co:5432/postgres";
 
