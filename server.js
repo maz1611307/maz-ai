@@ -1,12 +1,16 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-
+const path = require('path');
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.static('.'));
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
 
 // Replace this string with your actual Supabase connection URL from earlier
 const DATABASE_URL = "postgresql://postgres:maz_1611%40Ali@db.ggmbxaklicgoczqwrepe.supabase.co:5432/postgres";
