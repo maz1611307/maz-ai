@@ -1,5 +1,8 @@
+const express = require('express');
+const app = express();
 const chatHandler = require('./api/chat.js');
 
-module.exports = (req, res) => {
-    return chatHandler(req, res);
-};
+app.use(express.json());
+app.post('/api/chat', chatHandler);
+
+module.exports = app;
