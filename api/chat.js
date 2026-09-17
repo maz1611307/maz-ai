@@ -12,7 +12,6 @@ module.exports = async (req, res) => {
             return res.status(500).json({ reply: 'Error: GROQ_API_KEY is not set in Vercel.' });
         }
 
-        // Active supported Groq models
         const modelsToTry = [
             'llama-3.3-70b-versatile',
             'llama-3.1-8b-instant',
@@ -32,7 +31,16 @@ module.exports = async (req, res) => {
                     },
                     body: JSON.stringify({
                         model: modelName,
-                        messages: [{ role: 'user', content: prompt }],
+                        messages: [
+                            { 
+                                role: 'system', 
+                                content: 'You are MAZ AI, a helpful AI assistant. Your owner and creator is MUHAMMAD ALI ZAHID. When users ask who created you or who your owner is, answer that you were created by MUHAMMAD ALI ZAHID.' 
+                            },
+                            { 
+                                role: 'user', 
+                                content: prompt 
+                            }
+                        ],
                         temperature: 0.6
                     })
                 });
