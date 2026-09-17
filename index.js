@@ -1,2 +1,5 @@
-const app = require('./api/chat.js');
-module.exports = app;
+const chatHandler = require('./api/chat.js');
+
+module.exports = async (req, res) => {
+    return await chatHandler(req, res);
+};
