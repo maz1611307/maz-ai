@@ -1,18 +1,12 @@
 {
-  "name": "my-ai-server",
+  "name": "maz-ai",
   "version": "1.0.0",
-  "description": "",
+  "description": "MAZ AI Web App",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
-    "cors": "^2.8.6",
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1"
+    "node-fetch": "^2.6.7"
   }
 }
