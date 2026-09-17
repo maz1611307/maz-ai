@@ -12,17 +12,16 @@ module.exports = async (req, res) => {
             return res.status(500).json({ reply: 'Error: GROQ_API_KEY is not set in Vercel.' });
         }
 
-        // List of fast Groq models to try in order
+        // Active supported Groq models
         const modelsToTry = [
             'llama-3.3-70b-versatile',
             'llama-3.1-8b-instant',
-            'mixtral-8x7b-32768'
+            'openai/gpt-oss-20b'
         ];
 
         let replyText = null;
         let lastError = null;
 
-        // Loop through models as fallbacks if one fails or hits rate limits
         for (const modelName of modelsToTry) {
             try {
                 const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -42,7 +41,7 @@ module.exports = async (req, res) => {
 
                 if (response.ok && data.choices && data.choices[0]?.message?.content) {
                     replyText = data.choices[0].message.content;
-                    break; // Success! Break out of the loop
+                    break;
                 } else {
                     lastError = data.error?.message || `HTTP ${response.status}`;
                 }
