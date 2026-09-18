@@ -1,37 +1,26 @@
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return res.status(200).json({ reply: 'Error: Only POST method allowed' });
   }
 
-  const { message } = req.body;
+  const { message } = req.body || {};
   if (!message) {
-    return res.status(400).json({ error: 'Message is required' });
+    return res.status(200).json({ reply: 'Error: No message sent' });
   }
 
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_ANON_KEY;
   const groqKey = process.env.GROQ_API_KEY;
 
+  // Check if keys are loaded in Vercel
+  if (!supabaseUrl || !supabaseKey || !groqKey) {
+    return res.status(200).json({ 
+      reply: `Missing Environment Keys in Vercel! (SUPABASE_URL: ${!!supabaseUrl}, SUPABASE_ANON_KEY: ${!!supabaseKey}, GROQ_API_KEY: ${!!groqKey})` 
+    });
+  }
+
   try {
-    let history = [];
-
-    // 1. Fetch chat history safely from Supabase REST API
-    try {
-      const historyRes = await fetch(`${supabaseUrl}/rest/v1/chat_messages?select=role,content&order=id.asc&limit=10`, {
-        headers: {
-          'apikey': supabaseKey,
-          'Authorization': `Bearer ${supabaseKey}`
-        }
-      });
-      if (historyRes.ok) {
-        const historyData = await historyRes.json();
-        if (Array.isArray(historyData)) history = historyData;
-      }
-    } catch (e) {
-      console.error('Supabase fetch error:', e);
-    }
-
-    // 2. Call Groq API with history context
+    // Send request to Groq API
     const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -41,8 +30,7 @@ module.exports = async function handler(req, res) {
       body: JSON.stringify({
         model: 'llama-3.3-70b-versatile',
         messages: [
-          { role: 'system', content: 'You are MAZ AI, created by MUHAMMAD ALI ZAHID. Remember chat context and keep responses clear and simple.' },
-          ...history,
+          { role: 'system', content: 'You are MAZ AI, created by MUHAMMAD ALI ZAHID. Keep replies simple.' },
           { role: 'user', content: message }
         ]
       })
@@ -50,13 +38,15 @@ module.exports = async function handler(req, res) {
 
     const groqData = await groqRes.json();
 
-    if (!groqRes.ok || !groqData.choices || !groqData.choices[0]) {
-      return res.status(500).json({ error: groqData.error?.message || 'Groq API key error' });
+    if (!groqRes.ok) {
+      return res.status(200).json({ 
+        reply: `Groq API Error: ${groqData.error?.message || JSON.stringify(groqData)}` 
+      });
     }
 
-    const reply = groqData.choices[0].message.content;
+    const reply = groqData.choices?.[0]?.message?.content || "No reply received from Groq.";
 
-    // 3. Save new chat messages to Supabase safely
+    // Save to Supabase
     try {
       await fetch(`${supabaseUrl}/rest/v1/chat_messages`, {
         method: 'POST',
@@ -71,13 +61,13 @@ module.exports = async function handler(req, res) {
           { role: 'assistant', content: reply }
         ])
       });
-    } catch (e) {
-      console.error('Supabase save error:', e);
+    } catch (dbErr) {
+      console.error("Supabase Save Error:", dbErr);
     }
 
     return res.status(200).json({ reply });
 
   } catch (err) {
-    return res.status(500).json({ error: err.message || 'Server error' });
+    return res.status(200).json({ reply: `Server Exception: ${err.message}` });
   }
 };
