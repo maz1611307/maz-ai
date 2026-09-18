@@ -29,7 +29,7 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    // 2. Send request to Groq using llama3-8b-8192
+    // 2. Send request to Groq using llama-3.3-70b-versatile
     const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -37,7 +37,7 @@ module.exports = async function handler(req, res) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'llama3-8b-8192',
+        model: 'llama-3.3-70b-versatile',
         messages: [
           { role: 'system', content: 'You are MAZ AI, created by MUHAMMAD ALI ZAHID. Keep replies short and simple.' },
           ...history,
