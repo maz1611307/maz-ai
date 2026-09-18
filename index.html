@@ -34,28 +34,17 @@
     
     header { 
       background-color: var(--card-bg); 
-      padding: 12px 20px; 
+      padding: 14px 20px; 
       display: flex;
       justify-content: space-between;
       align-items: center;
       border-bottom: 1px solid var(--border-color);
-      min-height: 65px; /* Keeps header height consistent */
     }
 
-    /* Standard header layout (collapsed) */
     .brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 1.1rem;
+      font-size: 1.2rem;
       font-weight: 700;
-    }
-
-    /* Target logo in the brand area (collapsed view) */
-    .brand img {
-      width: 26px;
-      height: 26px;
-      border-radius: 6px;
+      color: #8b5cf6;
     }
 
     .theme-toggle-btn {
@@ -68,7 +57,6 @@
       font-size: 0.85rem;
     }
 
-    /* Messaging Area - Transition behavior */
     #chat-box { 
       flex: 1; 
       overflow-y: auto; 
@@ -76,66 +64,45 @@
       display: flex; 
       flex-direction: column; 
       gap: 14px;
-      transition: all 0.5s ease-in-out;
-    }
-    
-    /* When messaging begins, chat-box collapses towards the top */
-    #chat-box.active {
-      display: flex;
-      justify-content: flex-start;
-      align-items: flex-start;
     }
 
-    /* Welcome/Startup layout (Image 3 behavior) */
+    /* Startup Layout */
     #chat-box.startup {
       justify-content: center;
       align-items: center;
-      padding: 0;
       text-align: center;
     }
 
-    /* Welcoming Area inside startup */
     .welcome-prompt {
-      display: none; /* Hidden by default */
+      display: none;
     }
 
     #chat-box.startup .welcome-prompt {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 12px;
-      margin-top: -100px; /* Centers it vertically */
-    }
-
-    #chat-box.startup .startup-logo {
-      width: 140px;
-      height: 140px;
-      box-shadow: 0 0 35px var(--purple-glow);
-      border-radius: 20px;
+      gap: 10px;
     }
 
     #chat-box.startup h1 {
-      font-size: 2.2rem;
-      margin-top: 10px;
-      font-weight: 700;
+      font-size: 2.5rem;
+      color: #8b5cf6;
+      text-shadow: 0 0 15px var(--purple-glow);
     }
 
-    /* Hide standard chat messages in startup view */
-    #chat-box.startup .message, 
-    #chat-box.startup .agent-greeting {
+    #chat-box.startup p {
+      color: #94a3b8;
+      font-size: 1.1rem;
+    }
+
+    #chat-box.startup .message {
       display: none;
-    }
-
-    /* Agent greeting will be visible in active mode */
-    #chat-box.active .agent-greeting {
-      display: flex;
     }
 
     .message { max-width: 85%; padding: 12px 16px; border-radius: 12px; line-height: 1.5; word-wrap: break-word; font-size: 0.95rem; }
     .user-msg { align-self: flex-end; background-color: var(--msg-user-bg); color: #ffffff; border-bottom-right-radius: 2px; }
     .agent-msg { align-self: flex-start; background-color: var(--msg-ai-bg); color: var(--text-color); border-bottom-left-radius: 2px; border: 1px solid var(--border-color); }
     
-    /* Formatting Markdown Elements inside AI answers */
     .agent-msg p { margin-bottom: 8px; }
     .agent-msg p:last-child { margin-bottom: 0; }
     .agent-msg table { border-collapse: collapse; width: 100%; margin: 10px 0; background: rgba(0,0,0,0.2); border-radius: 6px; overflow: hidden; }
@@ -146,7 +113,6 @@
 
     footer { padding: 16px; background-color: var(--card-bg); border-top: 1px solid var(--border-color); }
     
-    /* Purple Glowing Container for Input */
     .input-wrapper {
       display: flex;
       gap: 8px;
@@ -171,26 +137,17 @@
 <body onload="initializeChat()">
 
   <header>
-    <div class="brand">
-      <!-- Your new custom purple logo (maz-logo-purple.png) -->
-      <img src="https://i.ibb.co/5Kq3jFj/maz-logo-purple.png" id="ai-logo" alt="MAZ AI Logo">
-      <span>MAZ AI</span>
-    </div>
+    <div class="brand">MAZ AI</div>
     <button class="theme-toggle-btn" onclick="toggleTheme()">☀️ / 🌙 Theme</button>
   </header>
 
-  <!-- chat-box starts with 'startup' class to show central layout -->
   <div id="chat-box" class="startup">
     
-    <!-- Central welcome layout for startup (Image 3) -->
     <div class="welcome-prompt">
-      <img src="https://i.ibb.co/5Kq3jFj/maz-logo-purple.png" class="startup-logo" alt="MAZ AI Logo Big">
       <h1>MAZ AI</h1>
       <p>How can I help you today?</p>
     </div>
 
-    <!-- The agent's standard chat greeting, shown in active mode -->
-    <div class="message agent-msg agent-greeting">Hello! I am MAZ AI. How can I help you today?</div>
   </div>
 
   <footer>
@@ -202,7 +159,6 @@
 
   <script>
     function initializeChat() {
-      // Ensure page is fresh in startup mode
       document.getElementById('chat-box').className = 'startup';
     }
 
@@ -221,23 +177,18 @@
       const text = input.value.trim();
       if (!text) return;
 
-      // When messaging begins: collapse the startup view into chat view
       if (chatBox.classList.contains('startup')) {
         chatBox.classList.remove('startup');
-        chatBox.classList.add('active');
       }
 
-      // 1. User Message
       chatBox.innerHTML += `<div class="message user-msg">${escapeHtml(text)}</div>`;
       input.value = '';
       chatBox.scrollTop = chatBox.scrollHeight;
 
-      // 2. Loading state
       const loadingId = 'loading-' + Date.now();
       chatBox.innerHTML += `<div class="message agent-msg" id="${loadingId}">MAZ AI is thinking...</div>`;
       chatBox.scrollTop = chatBox.scrollHeight;
 
-      // 3. API Call (Replace with your server URL)
       try {
         const response = await fetch('/api/chat', {
           method: 'POST',
@@ -246,7 +197,6 @@
         });
         const data = await response.json();
         
-        // 4. Update with markdown answer
         document.getElementById(loadingId).innerHTML = marked.parse(data.reply);
       } catch (err) {
         document.getElementById(loadingId).innerText = "Error connecting to backend server.";
