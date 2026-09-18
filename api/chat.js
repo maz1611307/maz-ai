@@ -16,7 +16,7 @@ module.exports = async function handler(req, res) {
     let history = [];
     if (supabaseUrl && supabaseKey) {
       try {
-        const historyRes = await fetch(`${supabaseUrl.trim()}/rest/v1/chat_messages?select=role,content&order=id.asc&limit=8`, {
+        const historyRes = await fetch(`${supabaseUrl.trim()}/rest/v1/chat_messages?select=role,content&order=id.asc&limit=20`, {
           headers: {
             'apikey': supabaseKey.trim(),
             'Authorization': `Bearer ${supabaseKey.trim()}`
@@ -24,14 +24,19 @@ module.exports = async function handler(req, res) {
         });
         if (historyRes.ok) {
           const historyData = await historyRes.json();
-          if (Array.isArray(historyData)) history = historyData;
+          if (Array.isArray(historyData)) {
+            history = historyData.map(item => ({
+              role: item.role,
+              content: item.content
+            }));
+          }
         }
       } catch (e) {
-        console.error("Supabase error:", e);
+        console.error("Supabase fetch error:", e);
       }
     }
 
-    // 2. Call Groq API
+    // 2. Call Groq API using the stable llama-3.1-8b-instant model
     const aiRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -39,11 +44,11 @@ module.exports = async function handler(req, res) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'openai/gpt-oss-20b',
+        model: 'llama-3.1-8b-instant',
         messages: [
           { 
             role: 'system', 
-            content: 'You are MAZ AI, created by MUHAMMAD ALI ZAHID. Provide clear, accurate, and helpful answers.' 
+            content: 'You are MAZ AI, created by MUHAMMAD ALI ZAHID. Provide clear, accurate, and direct answers.' 
           },
           ...history,
           { role: 'user', content: message || 'hello' }
@@ -59,7 +64,7 @@ module.exports = async function handler(req, res) {
 
     const reply = aiData.choices?.[0]?.message?.content || "No reply from Groq";
 
-    // 3. Save reply to Supabase
+    // 3. Save current user message and AI reply to Supabase
     if (supabaseUrl && supabaseKey) {
       try {
         await fetch(`${supabaseUrl.trim()}/rest/v1/chat_messages`, {
@@ -76,7 +81,7 @@ module.exports = async function handler(req, res) {
           ])
         });
       } catch (dbErr) {
-        console.error("Save error:", dbErr);
+        console.error("Supabase save error:", dbErr);
       }
     }
 
