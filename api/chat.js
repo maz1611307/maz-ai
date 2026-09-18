@@ -13,27 +13,36 @@ module.exports = async function handler(req, res) {
   const groqKey = process.env.GROQ_API_KEY;
 
   try {
-    // 1. Fetch chat history directly from Supabase REST API
-    const historyRes = await fetch(`${supabaseUrl}/rest/v1/chat_messages?select=role,content&order=id.asc&limit=10`, {
-      headers: {
-        'apikey': supabaseKey,
-        'Authorization': `Bearer ${supabaseKey}`
+    let history = [];
+
+    // 1. Fetch chat history safely
+    try {
+      const historyRes = await fetch(`${supabaseUrl}/rest/v1/chat_messages?select=role,content&order=id.asc&limit=10`, {
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${supabaseKey}`
+        }
+      });
+
+      if (historyRes.ok) {
+        const data = await historyRes.json();
+        if (Array.isArray(data)) history = data;
       }
-    });
+    } catch (e) {
+      console.error("Supabase history error:", e);
+    }
 
-    const history = await historyRes.json();
-
-    // 2. Build messages array with system prompt and history
+    // 2. Build system message and history
     const messages = [
       {
         role: 'system',
         content: 'You are MAZ AI, created by MUHAMMAD ALI ZAHID. Remember chat context and keep replies simple.'
       },
-      ...(Array.isArray(history) ? history : []),
+      ...history,
       { role: 'user', content: message }
     ];
 
-    // 3. Send message to Groq API
+    // 3. Request reply from Groq
     const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -46,33 +55,36 @@ module.exports = async function handler(req, res) {
       })
     });
 
-    const data = await groqRes.json();
+    const groqData = await groqRes.json();
 
-    if (!data.choices || !data.choices[0]) {
-      throw new Error('Groq API error: ' + JSON.stringify(data));
+    if (!groqRes.ok || !groqData.choices || !groqData.choices[0]) {
+      return res.status(500).json({ error: 'Groq API error' });
     }
 
-    const reply = data.choices[0].message.content;
+    const reply = groqData.choices[0].message.content;
 
-    // 4. Save message and reply into Supabase database
-    await fetch(`${supabaseUrl}/rest/v1/chat_messages`, {
-      method: 'POST',
-      headers: {
-        'apikey': supabaseKey,
-        'Authorization': `Bearer ${supabaseKey}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=minimal'
-      },
-      body: JSON.stringify([
-        { role: 'user', content: message },
-        { role: 'assistant', content: reply }
-      ])
-    });
+    // 4. Save to database safely
+    try {
+      await fetch(`${supabaseUrl}/rest/v1/chat_messages`, {
+        method: 'POST',
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${supabaseKey}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal'
+        },
+        body: JSON.stringify([
+          { role: 'user', content: message },
+          { role: 'assistant', content: reply }
+        ])
+      });
+    } catch (e) {
+      console.error("Supabase insert error:", e);
+    }
 
     return res.status(200).json({ reply });
 
   } catch (err) {
-    console.error('Server Error:', err);
     return res.status(500).json({ error: err.message || 'Server error' });
   }
 };
