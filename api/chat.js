@@ -7,12 +7,11 @@ module.exports = async function handler(req, res) {
     const supabaseKey = process.env.SUPABASE_ANON_KEY;
 
     if (!groqKey) {
-      return res.status(200).json({ reply: "Error: GROQ_API_KEY is missing in Vercel Settings!" });
+      return res.status(200).json({ reply: "Error: GROQ_API_KEY is missing in Vercel!" });
     }
 
     groqKey = groqKey.trim();
 
-    // 1. Fetch chat history from Supabase
     let history = [];
     if (supabaseUrl && supabaseKey) {
       try {
@@ -31,7 +30,6 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    // 2. Call Groq API
     const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -39,7 +37,7 @@ module.exports = async function handler(req, res) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'llama-3.1-8b-instant',
+        model: 'mixtral-8x7b-32768',
         messages: [
           { role: 'system', content: 'You are MAZ AI, created by MUHAMMAD ALI ZAHID. Keep replies short and simple.' },
           ...history,
@@ -51,12 +49,11 @@ module.exports = async function handler(req, res) {
     const groqData = await groqRes.json();
 
     if (!groqRes.ok) {
-      return res.status(200).json({ reply: `Groq Key Error: ${groqData.error?.message || 'Invalid API Key'}` });
+      return res.status(200).json({ reply: `Groq Error: ${groqData.error?.message || 'Model error'}` });
     }
 
     const reply = groqData.choices[0].message.content;
 
-    // 3. Save to Supabase
     if (supabaseUrl && supabaseKey) {
       try {
         await fetch(`${supabaseUrl.trim()}/rest/v1/chat_messages`, {
