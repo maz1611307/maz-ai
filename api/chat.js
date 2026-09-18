@@ -10,7 +10,7 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ reply: "Error: GROQ_API_KEY is missing in Vercel!" });
     }
 
-    // Fetch history safely from Supabase
+    // 1. Fetch chat history from Supabase
     let history = [];
     if (supabaseUrl && supabaseKey) {
       try {
@@ -25,11 +25,11 @@ module.exports = async function handler(req, res) {
           if (Array.isArray(historyData)) history = historyData;
         }
       } catch (e) {
-        console.error("Supabase fetch error:", e);
+        console.error("Supabase error:", e);
       }
     }
 
-    // Call Groq API using llama-3.1-8b-instant model
+    // 2. Send request to Groq using llama3-8b-8192
     const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -37,7 +37,7 @@ module.exports = async function handler(req, res) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'llama-3.1-8b-instant',
+        model: 'llama3-8b-8192',
         messages: [
           { role: 'system', content: 'You are MAZ AI, created by MUHAMMAD ALI ZAHID. Keep replies short and simple.' },
           ...history,
@@ -49,12 +49,12 @@ module.exports = async function handler(req, res) {
     const groqData = await groqRes.json();
 
     if (!groqRes.ok) {
-      return res.status(200).json({ reply: `Groq Error: ${groqData.error?.message || 'Model error'}` });
+      return res.status(200).json({ reply: `Groq Error: ${groqData.error?.message || 'Key or Model error'}` });
     }
 
     const reply = groqData.choices[0].message.content;
 
-    // Save new messages to Supabase database
+    // 3. Save to Supabase
     if (supabaseUrl && supabaseKey) {
       try {
         await fetch(`${supabaseUrl}/rest/v1/chat_messages`, {
@@ -71,7 +71,7 @@ module.exports = async function handler(req, res) {
           ])
         });
       } catch (dbErr) {
-        console.error("Database save failed:", dbErr);
+        console.error("Save error:", dbErr);
       }
     }
 
