@@ -31,7 +31,7 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    // 2. Call Groq model with LOW reasoning effort for fast speed
+    // 2. Call Llama 3.3 70B (Smartest Groq Model)
     const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -39,10 +39,12 @@ module.exports = async function handler(req, res) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'openai/gpt-oss-20b',
-        reasoning_effort: 'low',
+        model: 'llama-3.3-70b-versatile',
         messages: [
-          { role: 'system', content: 'You are MAZ AI, created by MUHAMMAD ALI ZAHID. Keep replies short and simple.' },
+          { 
+            role: 'system', 
+            content: 'You are MAZ AI, a highly intelligent and helpful AI assistant created by MUHAMMAD ALI ZAHID. Provide clear, accurate, and informative answers tailored to what the user asks.' 
+          },
           ...history,
           { role: 'user', content: message || 'hello' }
         ]
