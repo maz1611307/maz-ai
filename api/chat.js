@@ -1,37 +1,34 @@
 module.exports = async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(200).json({ reply: 'Error: Only POST method allowed' });
-  }
-
-  const { message } = req.body || {};
-  if (!message) {
-    return res.status(200).json({ reply: 'Error: No message sent' });
-  }
-
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_ANON_KEY;
-  const groqKey = process.env.GROQ_API_KEY;
-
-  // Check if keys are loaded in Vercel
-  if (!supabaseUrl || !supabaseKey || !groqKey) {
-    return res.status(200).json({ 
-      reply: `Missing Environment Keys in Vercel! (SUPABASE_URL: ${!!supabaseUrl}, SUPABASE_ANON_KEY: ${!!supabaseKey}, GROQ_API_KEY: ${!!groqKey})` 
-    });
-  }
-
   try {
-    // Send request to Groq API
+    const { message } = req.body || {};
+
+    const groqKey = process.env.GROQ_API_KEY;
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_ANON_KEY;
+
+    // 1. Check if keys exist in Vercel
+    if (!groqKey) {
+      return res.status(200).json({ reply: "Error: GROQ_API_KEY is missing in Vercel Environment Variables!" });
+    }
+    if (!supabaseUrl) {
+      return res.status(200).json({ reply: "Error: SUPABASE_URL is missing in Vercel Environment Variables!" });
+    }
+    if (!supabaseKey) {
+      return res.status(200).json({ reply: "Error: SUPABASE_ANON_KEY is missing in Vercel Environment Variables!" });
+    }
+
+    // 2. Call Groq AI API directly
     const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${groqKey}`,
+        'Authorization': `Bearer ${groqKey.trim()}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         model: 'llama-3.3-70b-versatile',
         messages: [
-          { role: 'system', content: 'You are MAZ AI, created by MUHAMMAD ALI ZAHID. Keep replies simple.' },
-          { role: 'user', content: message }
+          { role: 'system', content: 'You are MAZ AI, created by MUHAMMAD ALI ZAHID. Keep replies short and simple.' },
+          { role: 'user', content: message || 'hello' }
         ]
       })
     });
@@ -39,20 +36,18 @@ module.exports = async function handler(req, res) {
     const groqData = await groqRes.json();
 
     if (!groqRes.ok) {
-      return res.status(200).json({ 
-        reply: `Groq API Error: ${groqData.error?.message || JSON.stringify(groqData)}` 
-      });
+      return res.status(200).json({ reply: `Groq Key Error: ${groqData.error?.message || 'Invalid API Key'}` });
     }
 
-    const reply = groqData.choices?.[0]?.message?.content || "No reply received from Groq.";
+    const reply = groqData.choices[0].message.content;
 
-    // Save to Supabase
+    // 3. Save to Supabase database
     try {
       await fetch(`${supabaseUrl}/rest/v1/chat_messages`, {
         method: 'POST',
         headers: {
-          'apikey': supabaseKey,
-          'Authorization': `Bearer ${supabaseKey}`,
+          'apikey': supabaseKey.trim(),
+          'Authorization': `Bearer ${supabaseKey.trim()}`,
           'Content-Type': 'application/json',
           'Prefer': 'return=minimal'
         },
@@ -62,12 +57,12 @@ module.exports = async function handler(req, res) {
         ])
       });
     } catch (dbErr) {
-      console.error("Supabase Save Error:", dbErr);
+      console.error("Database save failed:", dbErr);
     }
 
     return res.status(200).json({ reply });
 
   } catch (err) {
-    return res.status(200).json({ reply: `Server Exception: ${err.message}` });
+    return res.status(200).json({ reply: `Server Error: ${err.message}` });
   }
 };
