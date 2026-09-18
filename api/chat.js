@@ -31,7 +31,7 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    // 2. Call active Groq model
+    // 2. Call Groq model with LOW reasoning effort for fast speed
     const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -40,6 +40,7 @@ module.exports = async function handler(req, res) {
       },
       body: JSON.stringify({
         model: 'openai/gpt-oss-20b',
+        reasoning_effort: 'low',
         messages: [
           { role: 'system', content: 'You are MAZ AI, created by MUHAMMAD ALI ZAHID. Keep replies short and simple.' },
           ...history,
@@ -51,7 +52,7 @@ module.exports = async function handler(req, res) {
     const groqData = await groqRes.json();
 
     if (!groqRes.ok) {
-      return res.status(200).json({ reply: `Groq Error: ${groqData.error?.message || 'Model or key error'}` });
+      return res.status(200).json({ reply: `Groq Error: ${groqData.error?.message || 'Model error'}` });
     }
 
     const reply = groqData.choices[0].message.content;
