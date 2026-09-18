@@ -12,7 +12,7 @@ module.exports = async function handler(req, res) {
 
     groqKey = groqKey.trim();
 
-    // 1. Get history from Supabase
+    // 1. Fetch chat history from Supabase
     let history = [];
     if (supabaseUrl && supabaseKey) {
       try {
@@ -39,7 +39,7 @@ module.exports = async function handler(req, res) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'llama-3.1-8b-instant',
+        model: 'openai/gpt-oss-20b',
         messages: [
           { role: 'system', content: 'You are MAZ AI, created by MUHAMMAD ALI ZAHID. Keep replies short and simple.' },
           ...history,
