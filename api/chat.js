@@ -31,7 +31,7 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    // 2. Call OpenRouter with NVIDIA Nemotron
+    // 2. Call OpenRouter API
     const aiRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -43,7 +43,7 @@ module.exports = async function handler(req, res) {
         messages: [
           { 
             role: 'system', 
-            content: 'You are MAZ AI, created by MUHAMMAD ALI ZAHID. Answer clearly, accurately, and smartly.' 
+            content: 'You are MAZ AI, created by MUHAMMAD ALI ZAHID. Provide clear, accurate, and helpful answers.' 
           },
           ...history,
           { role: 'user', content: message || 'hello' }
@@ -53,8 +53,14 @@ module.exports = async function handler(req, res) {
 
     const aiData = await aiRes.json();
 
-    if (!aiRes.ok) {
-      return res.status(200).json({ reply: `OpenRouter Error: ${aiData.error?.message || 'API error'}` });
+    // Check if API returned an error message
+    if (!aiRes.ok || aiData.error) {
+      return res.status(200).json({ reply: `API Error: ${aiData.error?.message || 'OpenRouter error'}` });
+    }
+
+    // Check if choices array exists safely
+    if (!aiData.choices || !aiData.choices[0] || !aiData.choices[0].message) {
+      return res.status(200).json({ reply: "Error: Model returned an empty response. Try again." });
     }
 
     const reply = aiData.choices[0].message.content;
