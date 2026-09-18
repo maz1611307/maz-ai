@@ -2,15 +2,15 @@ module.exports = async function handler(req, res) {
   try {
     const { message } = req.body || {};
 
-    let openrouterKey = process.env.OPENROUTER_API_KEY;
+    let groqKey = process.env.GROQ_API_KEY;
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_ANON_KEY;
 
-    if (!openrouterKey) {
-      return res.status(200).json({ reply: "Error: OPENROUTER_API_KEY is missing in Vercel!" });
+    if (!groqKey) {
+      return res.status(200).json({ reply: "Error: GROQ_API_KEY is missing in Vercel!" });
     }
 
-    openrouterKey = openrouterKey.trim();
+    groqKey = groqKey.trim();
 
     // 1. Fetch chat history from Supabase
     let history = [];
@@ -31,15 +31,15 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    // 2. Call OpenRouter API
-    const aiRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    // 2. Call Groq API
+    const aiRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openrouterKey}`,
+        'Authorization': `Bearer ${groqKey}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'nvidia/nemotron-3-super-120b-a12b:free',
+        model: 'llama-3.3-70b-versatile',
         messages: [
           { 
             role: 'system', 
@@ -53,17 +53,11 @@ module.exports = async function handler(req, res) {
 
     const aiData = await aiRes.json();
 
-    // Check if API returned an error message
     if (!aiRes.ok || aiData.error) {
-      return res.status(200).json({ reply: `API Error: ${aiData.error?.message || 'OpenRouter error'}` });
+      return res.status(200).json({ reply: `Groq Error: ${aiData.error?.message || 'Failed to generate response'}` });
     }
 
-    // Check if choices array exists safely
-    if (!aiData.choices || !aiData.choices[0] || !aiData.choices[0].message) {
-      return res.status(200).json({ reply: "Error: Model returned an empty response. Try again." });
-    }
-
-    const reply = aiData.choices[0].message.content;
+    const reply = aiData.choices?.[0]?.message?.content || "No reply from Groq";
 
     // 3. Save reply to Supabase
     if (supabaseUrl && supabaseKey) {
