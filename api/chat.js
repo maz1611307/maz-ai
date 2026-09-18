@@ -1,71 +1,63 @@
-module.exports = async (req, res) => {
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method Not Allowed' });
-    }
+import { createClient } from '@supabase/supabase-js';
 
-    try {
-        const { message } = req.body;
-        const prompt = message || 'Hello';
-        const apiKey = process.env.GROQ_API_KEY;
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
-        if (!apiKey) {
-            return res.status(500).json({ reply: 'Error: GROQ_API_KEY is not set in Vercel.' });
-        }
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
 
-        const modelsToTry = [
-            'llama-3.3-70b-versatile',
-            'llama-3.1-8b-instant',
-            'openai/gpt-oss-20b'
-        ];
+  const { message } = req.body;
 
-        let replyText = null;
-        let lastError = null;
+  if (!message) {
+    return res.status(400).json({ error: 'Message is required' });
+  }
 
-        for (const modelName of modelsToTry) {
-            try {
-                const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${apiKey}`
-                    },
-                    body: JSON.stringify({
-                        model: modelName,
-                        messages: [
-                            { 
-                                role: 'system', 
-                                content: 'You are MAZ AI, a helpful AI assistant. Your owner and creator is MUHAMMAD ALI ZAHID. When users ask who created you or who your owner is, answer that you were created by MUHAMMAD ALI ZAHID.' 
-                            },
-                            { 
-                                role: 'user', 
-                                content: prompt 
-                            }
-                        ],
-                        temperature: 0.6
-                    })
-                });
+  try {
+    // Fetch last 10 messages from Supabase
+    const { data: history } = await supabase
+      .from('chat_messages')
+      .select('role, content')
+      .order('id', { ascending: true })
+      .limit(10);
 
-                const data = await response.json();
+    // Build message context with strict system prompt
+    const messages = [
+      {
+        role: 'system',
+        content: 'You are MAZ AI, created by MUHAMMAD ALI ZAHID. Always remember previous conversation context. Keep responses clear and simple.'
+      },
+      ...(history || []),
+      { role: 'user', content: message }
+    ];
 
-                if (response.ok && data.choices && data.choices[0]?.message?.content) {
-                    replyText = data.choices[0].message.content;
-                    break;
-                } else {
-                    lastError = data.error?.message || `HTTP ${response.status}`;
-                }
-            } catch (err) {
-                lastError = err.message;
-            }
-        }
+    // Call Groq API
+    const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: messages
+      })
+    });
 
-        if (replyText) {
-            return res.status(200).json({ reply: replyText });
-        } else {
-            return res.status(500).json({ reply: `Groq Error: ${lastError}` });
-        }
+    const data = await groqResponse.json();
+    const reply = data.choices[0].message.content;
 
-    } catch (error) {
-        console.error('Server Error:', error);
-        return res.status(500).json({ reply: `Error: ${error.message}` });
-    }
-};
+    // Save user message and AI response to Supabase
+    await supabase.from('chat_messages').insert([
+      { role: 'user', content: message },
+      { role: 'assistant', content: reply }
+    ]);
+
+    return res.status(200).json({ reply });
+
+  } catch (error) {
+    return res.status(500).json({ error: 'Server error' });
+  }
+}
