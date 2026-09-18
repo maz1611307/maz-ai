@@ -2,21 +2,21 @@ module.exports = async function handler(req, res) {
   try {
     const { message } = req.body || {};
 
-    let groqKey = process.env.GROQ_API_KEY;
+    let openrouterKey = process.env.OPENROUTER_API_KEY;
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_ANON_KEY;
 
-    if (!groqKey) {
-      return res.status(200).json({ reply: "Error: GROQ_API_KEY is missing in Vercel!" });
+    if (!openrouterKey) {
+      return res.status(200).json({ reply: "Error: OPENROUTER_API_KEY is missing in Vercel!" });
     }
 
-    groqKey = groqKey.trim();
+    openrouterKey = openrouterKey.trim();
 
     // 1. Fetch chat history from Supabase
     let history = [];
     if (supabaseUrl && supabaseKey) {
       try {
-        const historyRes = await fetch(`${supabaseUrl.trim()}/rest/v1/chat_messages?select=role,content&order=id.asc&limit=10`, {
+        const historyRes = await fetch(`${supabaseUrl.trim()}/rest/v1/chat_messages?select=role,content&order=id.asc&limit=8`, {
           headers: {
             'apikey': supabaseKey.trim(),
             'Authorization': `Bearer ${supabaseKey.trim()}`
@@ -31,19 +31,19 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    // 2. Call Llama 3.3 70B (Smartest Groq Model)
-    const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    // 2. Call OpenRouter with NVIDIA Nemotron
+    const aiRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${groqKey}`,
+        'Authorization': `Bearer ${openrouterKey}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model: 'nvidia/nemotron-3-super-120b-a12b:free',
         messages: [
           { 
             role: 'system', 
-            content: 'You are MAZ AI, a highly intelligent and helpful AI assistant created by MUHAMMAD ALI ZAHID. Provide clear, accurate, and informative answers tailored to what the user asks.' 
+            content: 'You are MAZ AI, created by MUHAMMAD ALI ZAHID. Answer clearly, accurately, and smartly.' 
           },
           ...history,
           { role: 'user', content: message || 'hello' }
@@ -51,13 +51,13 @@ module.exports = async function handler(req, res) {
       })
     });
 
-    const groqData = await groqRes.json();
+    const aiData = await aiRes.json();
 
-    if (!groqRes.ok) {
-      return res.status(200).json({ reply: `Groq Error: ${groqData.error?.message || 'Model error'}` });
+    if (!aiRes.ok) {
+      return res.status(200).json({ reply: `OpenRouter Error: ${aiData.error?.message || 'API error'}` });
     }
 
-    const reply = groqData.choices[0].message.content;
+    const reply = aiData.choices[0].message.content;
 
     // 3. Save reply to Supabase
     if (supabaseUrl && supabaseKey) {
