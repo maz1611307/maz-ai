@@ -12,6 +12,7 @@ module.exports = async function handler(req, res) {
 
     groqKey = groqKey.trim();
 
+    // 1. Get history from Supabase
     let history = [];
     if (supabaseUrl && supabaseKey) {
       try {
@@ -30,6 +31,7 @@ module.exports = async function handler(req, res) {
       }
     }
 
+    // 2. Call active Groq model
     const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -37,7 +39,7 @@ module.exports = async function handler(req, res) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'gemma2-9b-it',
+        model: 'llama-3.1-8b-instant',
         messages: [
           { role: 'system', content: 'You are MAZ AI, created by MUHAMMAD ALI ZAHID. Keep replies short and simple.' },
           ...history,
@@ -49,11 +51,12 @@ module.exports = async function handler(req, res) {
     const groqData = await groqRes.json();
 
     if (!groqRes.ok) {
-      return res.status(200).json({ reply: `Groq Error: ${groqData.error?.message || 'Model error'}` });
+      return res.status(200).json({ reply: `Groq Error: ${groqData.error?.message || 'Model or key error'}` });
     }
 
     const reply = groqData.choices[0].message.content;
 
+    // 3. Save reply to Supabase
     if (supabaseUrl && supabaseKey) {
       try {
         await fetch(`${supabaseUrl.trim()}/rest/v1/chat_messages`, {
