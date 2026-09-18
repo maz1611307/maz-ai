@@ -12,10 +12,14 @@ module.exports = async function handler(req, res) {
   const supabaseKey = process.env.SUPABASE_ANON_KEY;
   const groqKey = process.env.GROQ_API_KEY;
 
+  if (!supabaseUrl || !supabaseKey || !groqKey) {
+    return res.status(500).json({ error: 'Missing environment variables in Vercel settings.' });
+  }
+
   try {
     let history = [];
 
-    // 1. Fetch chat history safely
+    // Fetch history safely
     try {
       const historyRes = await fetch(`${supabaseUrl}/rest/v1/chat_messages?select=role,content&order=id.asc&limit=10`, {
         headers: {
@@ -23,26 +27,15 @@ module.exports = async function handler(req, res) {
           'Authorization': `Bearer ${supabaseKey}`
         }
       });
-
       if (historyRes.ok) {
-        const data = await historyRes.json();
-        if (Array.isArray(data)) history = data;
+        const historyData = await historyRes.json();
+        if (Array.isArray(historyData)) history = historyData;
       }
     } catch (e) {
-      console.error("Supabase history error:", e);
+      console.error('Supabase fetch error:', e);
     }
 
-    // 2. Build system message and history
-    const messages = [
-      {
-        role: 'system',
-        content: 'You are MAZ AI, created by MUHAMMAD ALI ZAHID. Remember chat context and keep replies simple.'
-      },
-      ...history,
-      { role: 'user', content: message }
-    ];
-
-    // 3. Request reply from Groq
+    // Call Groq API
     const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -51,19 +44,23 @@ module.exports = async function handler(req, res) {
       },
       body: JSON.stringify({
         model: 'llama-3.3-70b-versatile',
-        messages: messages
+        messages: [
+          { role: 'system', content: 'You are MAZ AI, created by MUHAMMAD ALI ZAHID. Keep replies clear and simple.' },
+          ...history,
+          { role: 'user', content: message }
+        ]
       })
     });
 
     const groqData = await groqRes.json();
 
     if (!groqRes.ok || !groqData.choices || !groqData.choices[0]) {
-      return res.status(500).json({ error: 'Groq API error' });
+      return res.status(500).json({ error: groqData.error?.message || 'Groq API request failed.' });
     }
 
     const reply = groqData.choices[0].message.content;
 
-    // 4. Save to database safely
+    // Save messages safely
     try {
       await fetch(`${supabaseUrl}/rest/v1/chat_messages`, {
         method: 'POST',
@@ -79,7 +76,7 @@ module.exports = async function handler(req, res) {
         ])
       });
     } catch (e) {
-      console.error("Supabase insert error:", e);
+      console.error('Supabase save error:', e);
     }
 
     return res.status(200).json({ reply });
