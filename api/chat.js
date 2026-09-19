@@ -36,8 +36,8 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    // Select vision model if image is present, otherwise use standard text model
-    const selectedModel = image ? 'llama-3.2-11b-vision-preview' : 'openai/gpt-oss-20b';
+    // Use active vision model for images, and standard text model for normal messages
+    const selectedModel = image ? 'llama-3.2-11b-vision-instruct' : 'openai/gpt-oss-20b';
 
     // Construct message payload
     let userContent = message || 'Describe or analyze this image.';
