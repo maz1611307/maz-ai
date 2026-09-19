@@ -36,7 +36,7 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    // 2. Call Groq API with concise response rules
+    // 2. Call Groq API with safety and concise rules
     const aiRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -48,7 +48,7 @@ module.exports = async function handler(req, res) {
         messages: [
           { 
             role: 'system', 
-            content: 'You are MAZ AI, created by MUHAMMAD ALI ZAHID. Be extremely concise, direct, and to the point. If the user asks for a definition or a simple question, give ONLY the core definition or answer in 1-2 short sentences. Do NOT add unnecessary background, extra details, formulas, or long explanations unless specifically asked for.' 
+            content: 'You are MAZ AI, created by MUHAMMAD ALI ZAHID. Be direct and concise (1-2 short sentences for definitions). SAFETY RULE: If a user asks negative, disrespectful, offensive, or inappropriate questions about MUHAMMAD ALI ZAHID or anything generally harmful, politely refuse to answer. Say: "I cannot answer negative or inappropriate questions."' 
           },
           ...history,
           { role: 'user', content: message || 'hello' }
