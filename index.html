@@ -76,7 +76,7 @@
       font-size: 15px;
     }
 
-    /* User Message - Compact Oval Bubble */
+    /* User Message */
     .message.user {
       align-self: flex-end;
       background-color: #2a1b4e;
@@ -90,7 +90,7 @@
       word-wrap: break-word;
     }
 
-    /* Gemini-Style AI Message - Pure text without box background */
+    /* Gemini-Style AI Message */
     .message.assistant {
       align-self: flex-start;
       background: transparent;
@@ -104,9 +104,9 @@
     }
 
     .chat-img-preview {
-      max-width: 240px;
-      max-height: 240px;
-      border-radius: 12px;
+      max-width: 280px;
+      max-height: 280px;
+      border-radius: 14px;
       margin-bottom: 8px;
       display: block;
     }
@@ -119,25 +119,49 @@
       margin: 0 auto;
     }
 
+    /* Unified Chat Container Box */
+    .input-card {
+      display: flex;
+      flex-direction: column;
+      background-color: #1a1625;
+      border: 1px solid #4c1d95;
+      border-radius: 24px;
+      padding: 12px;
+      gap: 10px;
+      box-shadow: 0 4px 20px rgba(124, 58, 237, 0.15);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .input-card:focus-within {
+      border-color: #8b5cf6;
+      box-shadow: 0 4px 24px rgba(139, 92, 246, 0.3);
+    }
+
+    /* Image Preview Strip inside Chat Box */
     #image-preview-container {
       display: none;
       align-items: center;
-      gap: 10px;
-      padding: 8px 14px;
-      background: #1a1625;
-      border: 1px solid #3b2d54;
-      border-bottom: none;
-      border-radius: 16px 16px 0 0;
+      gap: 12px;
+      padding: 4px 4px 8px 4px;
     }
 
-    #image-preview-container img {
-      width: 44px;
-      height: 44px;
+    .preview-img-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+
+    .preview-img-wrapper img {
+      width: 80px;
+      height: 80px;
       object-fit: cover;
-      border-radius: 8px;
+      border-radius: 14px;
+      border: 1px solid #581c87;
     }
 
     .remove-img-btn {
+      position: absolute;
+      top: -6px;
+      right: -6px;
       background: #ef4444;
       color: white;
       border: none;
@@ -146,47 +170,36 @@
       height: 22px;
       cursor: pointer;
       font-size: 12px;
-    }
-
-    /* Round Gemini-Style Chat Box with Purplish Theme */
-    .input-wrapper {
       display: flex;
       align-items: center;
-      background-color: #1a1625;
-      border: 1px solid #4c1d95;
-      border-radius: 28px;
-      padding: 6px 8px 6px 10px;
-      gap: 10px;
-      box-shadow: 0 4px 20px rgba(124, 58, 237, 0.15);
-      transition: border-color 0.2s, box-shadow 0.2s;
+      justify-content: center;
     }
 
-    .input-wrapper:focus-within {
-      border-color: #8b5cf6;
-      box-shadow: 0 4px 24px rgba(139, 92, 246, 0.3);
+    .input-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
 
-    /* Plus Button Inside Chat Box */
+    /* Plus Button Without Border */
     .add-file-btn {
-      background: #2a1b4e;
-      border: 1px solid #581c87;
+      background: transparent;
+      border: none;
       color: #c084fc;
-      font-size: 20px;
+      font-size: 26px;
       font-weight: 300;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
+      width: 32px;
+      height: 32px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background-color 0.2s, color 0.2s;
       flex-shrink: 0;
+      transition: transform 0.1s ease;
     }
 
-    .add-file-btn:hover {
-      background-color: #7e22ce;
-      color: #ffffff;
+    .add-file-btn:active {
+      transform: scale(0.9);
     }
 
     input[type="text"] {
@@ -196,7 +209,7 @@
       outline: none;
       color: #f3e8ff;
       font-size: 15px;
-      padding: 8px 0;
+      padding: 4px 0;
     }
 
     input[type="text"]::placeholder {
@@ -222,9 +235,9 @@
 
     body.light-mode { background-color: #f8fafc; color: #0f172a; }
     body.light-mode header, body.light-mode footer { background-color: transparent; }
-    body.light-mode .input-wrapper { background-color: #ffffff; border-color: #c084fc; box-shadow: 0 4px 16px rgba(192, 132, 252, 0.2); }
+    body.light-mode .input-card { background-color: #ffffff; border-color: #c084fc; box-shadow: 0 4px 16px rgba(192, 132, 252, 0.2); }
     body.light-mode input[type="text"] { color: #0f172a; }
-    body.light-mode .add-file-btn { background-color: #f3e8ff; border-color: #d8b4fe; color: #7e22ce; }
+    body.light-mode .add-file-btn { color: #7e22ce; }
     body.light-mode .message.assistant { color: #0f172a; }
     body.light-mode .message.user { background-color: #7e22ce; color: #ffffff; border-color: #6b21a8; }
   </style>
@@ -244,27 +257,31 @@
   </div>
 
   <footer>
-    <div id="image-preview-container">
-      <img id="preview-img" src="" alt="preview" />
-      <span style="font-size: 12px; color: #c084fc;">File attached</span>
-      <button class="remove-img-btn" onclick="clearImageAttachment()">✕</button>
-    </div>
-    <div class="input-wrapper">
-      <button class="add-file-btn" onclick="document.getElementById('file-input').click()" title="Add file or image">+</button>
-      <input type="file" id="file-input" accept="image/*" style="display: none;" onchange="handleFileSelect(event)" />
+    <div class="input-card">
+      <div id="image-preview-container">
+        <div class="preview-img-wrapper">
+          <img id="preview-img" src="" alt="preview" />
+          <button class="remove-img-btn" onclick="clearImageAttachment()">✕</button>
+        </div>
+      </div>
       
-      <input 
-        type="text" 
-        id="user-input" 
-        name="chat-message"
-        placeholder="Ask MAZ AI..." 
-        autocomplete="off" 
-        autocorrect="off" 
-        autocapitalize="sentences"
-        spellcheck="false"
-        onkeydown="if(event.key==='Enter') sendMessage()"
-      />
-      <button class="send-btn" onclick="sendMessage()">Send</button>
+      <div class="input-row">
+        <button class="add-file-btn" onclick="document.getElementById('file-input').click()" title="Add file or image">+</button>
+        <input type="file" id="file-input" accept="image/*" style="display: none;" onchange="handleFileSelect(event)" />
+        
+        <input 
+          type="text" 
+          id="user-input" 
+          name="chat-message"
+          placeholder="Ask MAZ AI..." 
+          autocomplete="off" 
+          autocorrect="off" 
+          autocapitalize="sentences"
+          spellcheck="false"
+          onkeydown="if(event.key==='Enter') sendMessage()"
+        />
+        <button class="send-btn" onclick="sendMessage()">Send</button>
+      </div>
     </div>
   </footer>
 
