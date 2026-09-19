@@ -9,69 +9,51 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%23120924' stroke='%238b5cf6' stroke-width='4'/><path d='M 22 68 C 22 68 20 32 30 26 C 38 20 42 58 48 58 C 54 58 56 28 66 26 C 74 24 76 68 82 66' stroke='%23c084fc' stroke-width='8' stroke-linecap='round' stroke-linejoin='round' fill='none'/><path d='M 22 68 C 22 68 20 32 30 26 C 38 20 42 58 48 58 C 54 58 56 28 66 26 C 74 24 76 68 82 66' stroke='%23f3e8ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' fill='none'/></svg>" />
 
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
 
     body {
       background-color: #0f0f13;
       color: #e2e8f0;
       height: 100vh;
-      display: flex;
-      overflow: hidden;
-    }
-
-    /* Layout */
-    .app-container { display: flex; width: 100vw; height: 100vh; }
-
-    /* Sidebar */
-    .sidebar {
-      width: 260px;
-      background-color: #120d1d;
-      border-right: 1px solid #2e2342;
+      height: 100dvh;
       display: flex;
       flex-direction: column;
-      padding: 16px;
-      gap: 16px;
+      overflow: hidden;
+      transition: background-color 0.3s ease, color 0.3s ease;
     }
 
-    .new-chat-btn {
-      background-color: #7c3aed;
-      color: white;
-      border: none;
-      border-radius: 12px;
-      padding: 12px;
-      font-weight: 600;
-      cursor: pointer;
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 20px;
+      background-color: transparent;
+    }
+
+    .brand {
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 8px;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 20px;
+      color: #c084fc;
+      letter-spacing: 0.5px;
     }
 
-    .new-chat-btn:hover { background-color: #6d28d9; }
-
-    .history-title { font-size: 11px; color: #94a3b8; font-weight: 700; letter-spacing: 0.5px; }
-
-    .history-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
-
-    .history-item {
-      padding: 10px 12px;
-      border-radius: 8px;
-      background-color: #1a1625;
-      color: #cbd5e1;
-      cursor: pointer;
+    .theme-btn {
+      background: #1e1e2d;
+      border: 1px solid #3b2d54;
+      color: #e2e8f0;
+      padding: 6px 12px;
+      border-radius: 20px;
       font-size: 13px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      cursor: pointer;
     }
-
-    .history-item:hover, .history-item.active { background-color: #271f38; color: #f3e8ff; border: 1px solid #581c87; }
-
-    /* Main Workspace */
-    .main-workspace { flex: 1; display: flex; flex-direction: column; height: 100%; }
-
-    header { display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; }
-    .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 20px; color: #c084fc; }
 
     #chat-container {
       flex: 1;
@@ -85,155 +67,412 @@
       margin: 0 auto;
     }
 
+    .welcome-screen {
+      margin: auto;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .welcome-screen h1 {
+      font-size: 32px;
+      color: #c084fc;
+      margin-bottom: 8px;
+    }
+
+    .welcome-screen p {
+      color: #94a3b8;
+      font-size: 15px;
+    }
+
     /* Message Styles */
-    .message.user { align-self: flex-end; background-color: #2a1b4e; color: #f3e8ff; border: 1px solid #581c87; padding: 10px 18px; border-radius: 22px; max-width: 80%; font-size: 15px; }
-    .message.assistant { align-self: flex-start; color: #e2e8f0; padding: 4px 0; width: 100%; font-size: 15px; line-height: 1.6; }
+    .message.user {
+      align-self: flex-end;
+      background-color: #2a1b4e;
+      color: #f3e8ff;
+      border: 1px solid #581c87;
+      padding: 10px 18px;
+      border-radius: 22px;
+      max-width: 80%;
+      font-size: 15px;
+      line-height: 1.5;
+      word-wrap: break-word;
+    }
 
-    /* Input Footer */
-    footer { padding: 12px 16px 20px 16px; max-width: 850px; width: 100%; margin: 0 auto; }
-    .input-card { display: flex; flex-direction: column; background-color: #1a1625; border: 1px solid #4c1d95; border-radius: 24px; padding: 10px 14px; gap: 8px; }
-    .input-row { display: flex; align-items: center; gap: 10px; }
-    input[type="text"] { flex: 1; background: transparent; border: none; outline: none; color: #f3e8ff; font-size: 15px; }
+    .message.assistant {
+      align-self: flex-start;
+      background: transparent;
+      border: none;
+      color: #e2e8f0;
+      padding: 4px 0;
+      width: 100%;
+      font-size: 15px;
+      line-height: 1.6;
+      word-wrap: break-word;
+    }
 
-    .actions-row { display: flex; align-items: center; justify-content: space-between; }
-    .actions-left { display: flex; align-items: center; gap: 8px; }
-    .add-file-btn { background: transparent; border: none; color: #c084fc; font-size: 24px; cursor: pointer; }
-    .think-btn { display: flex; align-items: center; gap: 6px; background-color: #271f38; border: 1px solid #4c1d95; color: #d8b4fe; padding: 6px 12px; border-radius: 20px; font-size: 13px; cursor: pointer; }
-    .think-btn.active { background-color: #7c3aed; color: white; }
-    .send-arrow-btn { background-color: #8b5cf6; color: white; border: none; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    .chat-img-preview {
+      max-width: 280px;
+      max-height: 280px;
+      border-radius: 14px;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    footer {
+      padding: 12px 16px 20px 16px;
+      background-color: transparent;
+      max-width: 850px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    /* Input Card Container */
+    .input-card {
+      display: flex;
+      flex-direction: column;
+      background-color: #1a1625;
+      border: 1px solid #4c1d95;
+      border-radius: 24px;
+      padding: 10px 14px;
+      gap: 8px;
+      box-shadow: 0 4px 20px rgba(124, 58, 237, 0.15);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .input-card:focus-within {
+      border-color: #8b5cf6;
+      box-shadow: 0 4px 24px rgba(139, 92, 246, 0.3);
+    }
+
+    /* Image Preview Container */
+    #image-preview-container {
+      display: none;
+      align-items: center;
+      gap: 12px;
+      padding: 4px 4px 4px 4px;
+    }
+
+    .preview-img-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+
+    .preview-img-wrapper img {
+      width: 70px;
+      height: 70px;
+      object-fit: cover;
+      border-radius: 12px;
+      border: 1px solid #581c87;
+    }
+
+    .remove-img-btn {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Main Input Area */
+    .input-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #f3e8ff;
+      font-size: 15px;
+      padding: 6px 0;
+    }
+
+    input[type="text"]::placeholder {
+      color: #94a3b8;
+    }
+
+    /* Action Buttons Row */
+    .actions-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 4px;
+    }
+
+    .actions-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Plus Button */
+    .add-file-btn {
+      background: transparent;
+      border: none;
+      color: #c084fc;
+      font-size: 24px;
+      font-weight: 300;
+      width: 32px;
+      height: 32px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: background 0.2s;
+    }
+
+    .add-file-btn:hover {
+      background: rgba(192, 132, 252, 0.1);
+    }
+
+    /* Think Button */
+    .think-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background-color: #271f38;
+      border: 1px solid #4c1d95;
+      color: #d8b4fe;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .think-btn:hover {
+      background-color: #35284d;
+      border-color: #8b5cf6;
+    }
+
+    .think-btn.active {
+      background-color: #7c3aed;
+      color: white;
+      border-color: #a855f7;
+    }
+
+    /* Round Purple Arrow Send Button */
+    .send-arrow-btn {
+      background-color: #8b5cf6;
+      color: white;
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background-color 0.2s, transform 0.1s;
+      flex-shrink: 0;
+    }
+
+    .send-arrow-btn:hover {
+      background-color: #7c3aed;
+    }
+
+    .send-arrow-btn:active {
+      transform: scale(0.95);
+    }
+
+    /* Light Mode Adjustments */
+    body.light-mode { background-color: #f8fafc; color: #0f172a; }
+    body.light-mode header, body.light-mode footer { background-color: transparent; }
+    body.light-mode .input-card { background-color: #ffffff; border-color: #c084fc; box-shadow: 0 4px 16px rgba(192, 132, 252, 0.2); }
+    body.light-mode input[type="text"] { color: #0f172a; }
+    body.light-mode .add-file-btn { color: #7e22ce; }
+    body.light-mode .think-btn { background-color: #f3e8ff; border-color: #d8b4fe; color: #6b21a8; }
+    body.light-mode .think-btn.active { background-color: #7e22ce; color: #ffffff; }
+    body.light-mode .message.assistant { color: #0f172a; }
+    body.light-mode .message.user { background-color: #7e22ce; color: #ffffff; border-color: #6b21a8; }
   </style>
 </head>
 <body>
 
-  <div class="app-container">
-    <!-- Sidebar for History & New Chat -->
-    <aside class="sidebar">
-      <button class="new-chat-btn" onclick="createNewChat()">
-        <span>+</span> New Chat
-      </button>
-      
-      <div class="history-title">RECENT CHATS</div>
-      <div class="history-list" id="history-list"></div>
-    </aside>
+  <header>
+    <div class="brand">
+      <svg width="28" height="28" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="48" fill="#120924" stroke="#8b5cf6" stroke-width="4"/>
+        <path d="M 22 68 C 22 68 20 32 30 26 C 38 20 42 58 48 58 C 54 58 56 28 66 26 C 74 24 76 68 82 66" stroke="#c084fc" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>MAZ AI</span>
+    </div>
+    <button class="theme-btn" id="theme-toggle">☀️ / 🌙 Theme</button>
+  </header>
 
-    <!-- Main Chat Workspace -->
-    <main class="main-workspace">
-      <header>
-        <div class="brand">
-          <svg width="28" height="28" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="50" cy="50" r="48" fill="#120924" stroke="#8b5cf6" stroke-width="4"/>
-            <path d="M 22 68 C 22 68 20 32 30 26 C 38 20 42 58 48 58 C 54 58 56 28 66 26 C 74 24 76 68 82 66" stroke="#c084fc" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <span>MAZ AI</span>
-        </div>
-      </header>
-
-      <div id="chat-container"></div>
-
-      <footer>
-        <div class="input-card">
-          <div class="input-row">
-            <input type="text" id="user-input" placeholder="Ask MAZ AI..." onkeydown="if(event.key==='Enter') sendMessage()" />
-          </div>
-          <div class="actions-row">
-            <div class="actions-left">
-              <button class="add-file-btn" title="Add file">+</button>
-              <button class="think-btn" id="think-toggle" onclick="toggleThink()">
-                🧠 <span>Think</span>
-              </button>
-            </div>
-            <button class="send-arrow-btn" onclick="sendMessage()">↑</button>
-          </div>
-        </div>
-      </footer>
-    </main>
+  <div id="chat-container">
+    <div class="welcome-screen" id="welcome">
+      <h1>MAZ AI</h1>
+      <p>How can I help you today?</p>
+    </div>
   </div>
 
+  <footer>
+    <div class="input-card">
+      <div id="image-preview-container">
+        <div class="preview-img-wrapper">
+          <img id="preview-img" src="" alt="preview" />
+          <button class="remove-img-btn" onclick="clearImageAttachment()">✕</button>
+        </div>
+      </div>
+      
+      <!-- Text Input Line -->
+      <div class="input-row">
+        <input 
+          type="text" 
+          id="user-input" 
+          name="chat-message"
+          placeholder="Ask MAZ AI..." 
+          autocomplete="off" 
+          autocorrect="off" 
+          autocapitalize="sentences"
+          spellcheck="false"
+          onkeydown="if(event.key==='Enter') sendMessage()"
+        />
+      </div>
+
+      <!-- Bottom Actions Row -->
+      <div class="actions-row">
+        <div class="actions-left">
+          <!-- Plus File Attachment Button -->
+          <button class="add-file-btn" onclick="document.getElementById('file-input').click()" title="Add image">+</button>
+          <input type="file" id="file-input" accept="image/*" style="display: none;" onchange="handleFileSelect(event)" />
+          
+          <!-- Think Button -->
+          <button class="think-btn" id="think-toggle" onclick="toggleThink()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a8 8 0 0 0-8 8c0 3.5 2.2 6.5 5.5 7.6V20a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-2.4c3.3-1.1 5.5-4.1 5.5-7.6a8 8 0 0 0-8-8z"/>
+              <path d="M10 22h4"/>
+            </svg>
+            <span>Think</span>
+          </button>
+        </div>
+
+        <!-- Round Purple Arrow Send Button -->
+        <button class="send-arrow-btn" onclick="sendMessage()" title="Send message">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="19" x2="12" y2="5"></line>
+            <polyline points="5 12 12 5 19 12"></polyline>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </footer>
+
   <script>
-    let chats = JSON.parse(localStorage.getItem('maz_chats') || '{}');
-    let activeChatId = null;
+    const chatContainer = document.getElementById('chat-container');
+    const userInput = document.getElementById('user-input');
+    const welcomeScreen = document.getElementById('welcome');
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    const previewContainer = document.getElementById('image-preview-container');
+    const previewImg = document.getElementById('preview-img');
+    const thinkToggle = document.getElementById('think-toggle');
+
+    let currentBase64Image = null;
     let isThinkActive = false;
 
     function toggleThink() {
       isThinkActive = !isThinkActive;
-      document.getElementById('think-toggle').classList.toggle('active', isThinkActive);
+      thinkToggle.classList.toggle('active', isThinkActive);
     }
 
-    function createNewChat() {
-      activeChatId = 'chat_' + Date.now();
-      chats[activeChatId] = { title: 'New Chat', messages: [] };
-      saveAndRender();
+    function handleFileSelect(event) {
+      const file = event.target.files[0];
+      if (file) processImageFile(file);
     }
 
-    function saveAndRender() {
-      localStorage.setItem('maz_chats', JSON.stringify(chats));
-      renderSidebar();
-      renderMessages();
+    document.addEventListener('paste', (event) => {
+      const items = (event.clipboardData || event.originalEvent.clipboardData).items;
+      for (let item of items) {
+        if (item.type.indexOf('image') !== -1) {
+          const blob = item.getAsFile();
+          processImageFile(blob);
+        }
+      }
+    });
+
+    function processImageFile(file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        currentBase64Image = e.target.result;
+        previewImg.src = currentBase64Image;
+        previewContainer.style.display = 'flex';
+      };
+      reader.readAsDataURL(file);
     }
 
-    function renderSidebar() {
-      const list = document.getElementById('history-list');
-      list.innerHTML = '';
-      Object.keys(chats).reverse().forEach(id => {
-        const item = document.createElement('div');
-        item.className = `history-item ${id === activeChatId ? 'active' : ''}`;
-        item.textContent = chats[id].title || 'Untitled Chat';
-        item.onclick = () => { activeChatId = id; saveAndRender(); };
-        list.appendChild(item);
-      });
+    function clearImageAttachment() {
+      currentBase64Image = null;
+      previewImg.src = '';
+      previewContainer.style.display = 'none';
+      document.getElementById('file-input').value = '';
     }
 
-    function renderMessages() {
-      const container = document.getElementById('chat-container');
-      container.innerHTML = '';
-      if (!activeChatId || !chats[activeChatId]) return;
-
-      chats[activeChatId].messages.forEach(msg => {
-        const div = document.createElement('div');
-        div.className = `message ${msg.role}`;
-        div.textContent = msg.text;
-        container.appendChild(div);
-      });
-      container.scrollTop = container.scrollHeight;
-    }
+    themeToggleBtn.addEventListener('click', () => {
+      document.body.classList.toggle('light-mode');
+      themeToggleBtn.textContent = document.body.classList.contains('light-mode') ? '🌙 Dark Mode' : '☀️ Light Mode';
+    });
 
     async function sendMessage() {
-      const input = document.getElementById('user-input');
-      const text = input.value.trim();
-      if (!text) return;
+      const text = userInput.value.trim();
+      if (!text && !currentBase64Image) return;
 
-      if (!activeChatId) createNewChat();
+      if (welcomeScreen) welcomeScreen.style.display = 'none';
 
-      // Set chat title if first message
-      if (chats[activeChatId].messages.length === 0) {
-        chats[activeChatId].title = text.slice(0, 25) + '...';
+      const userMessageDiv = appendMessage('user', text);
+      if (currentBase64Image) {
+        const imgElem = document.createElement('img');
+        imgElem.src = currentBase64Image;
+        imgElem.className = 'chat-img-preview';
+        userMessageDiv.prepend(imgElem);
       }
 
-      chats[activeChatId].messages.push({ role: 'user', text });
-      input.value = '';
-      saveAndRender();
+      const sentImage = currentBase64Image;
+      const thinkingMode = isThinkActive;
+
+      userInput.value = '';
+      clearImageAttachment();
+
+      const loadingDiv = appendMessage('assistant', thinkingMode ? 'Thinking deeply...' : 'Thinking...');
 
       try {
         const res = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: text, think: isThinkActive })
+          body: JSON.stringify({ message: text, image: sentImage, think: thinkingMode })
         });
         const data = await res.json();
-        chats[activeChatId].messages.push({ role: 'assistant', text: data.reply || "No response." });
+        loadingDiv.textContent = data.reply || "No response received.";
       } catch (err) {
-        chats[activeChatId].messages.push({ role: 'assistant', text: "Error connecting to server." });
+        loadingDiv.textContent = "Error connecting to server.";
       }
 
-      saveAndRender();
+      chatContainer.scrollTop = chatContainer.scrollHeight;
     }
 
-    // Initialize first chat on load
-    if (Object.keys(chats).length === 0) {
-      createNewChat();
-    } else {
-      activeChatId = Object.keys(chats).reverse()[0];
-      saveAndRender();
+    function appendMessage(role, text) {
+      const msg = document.createElement('div');
+      msg.className = `message ${role}`;
+      msg.textContent = text;
+      chatContainer.appendChild(msg);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+      return msg;
     }
   </script>
 </body>
