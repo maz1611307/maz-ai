@@ -12,11 +12,11 @@ module.exports = async function handler(req, res) {
 
     groqKey = groqKey.trim();
 
-    // 1. Fetch chat history from Supabase
+    // 1. Fetch recent chat history from Supabase (last 6 messages)
     let history = [];
     if (supabaseUrl && supabaseKey) {
       try {
-        const historyRes = await fetch(`${supabaseUrl.trim()}/rest/v1/chat_messages?select=role,content&order=id.asc&limit=15`, {
+        const historyRes = await fetch(`${supabaseUrl.trim()}/rest/v1/chat_messages?select=role,content&order=id.desc&limit=6`, {
           headers: {
             'apikey': supabaseKey.trim(),
             'Authorization': `Bearer ${supabaseKey.trim()}`
@@ -25,7 +25,8 @@ module.exports = async function handler(req, res) {
         if (historyRes.ok) {
           const historyData = await historyRes.json();
           if (Array.isArray(historyData)) {
-            history = historyData.map(item => ({
+            // Reverse so messages are in chronological order
+            history = historyData.reverse().map(item => ({
               role: item.role,
               content: item.content
             }));
@@ -36,7 +37,7 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    // 2. Call Groq API with strict context adherence
+    // 2. Call Groq API
     const aiRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -48,7 +49,7 @@ module.exports = async function handler(req, res) {
         messages: [
           { 
             role: 'system', 
-            content: 'You are MAZ AI, a helpful assistant created by MUHAMMAD ALI ZAHID. Pay close attention to the conversation history. When the user asks for adjustments (like a "short definition", "shorter version", or follow-up details), always apply it directly to the immediate previous topic discussed, never switch topics.' 
+            content: 'You are MAZ AI, created by MUHAMMAD ALI ZAHID. Reply naturally to greetings like "hi" or "hello". Follow conversation context accurately.' 
           },
           ...history,
           { role: 'user', content: message || 'hello' }
@@ -64,7 +65,7 @@ module.exports = async function handler(req, res) {
 
     const reply = aiData.choices?.[0]?.message?.content || "No reply from Groq";
 
-    // 3. Save current user message and AI reply to Supabase
+    // 3. Save new message pair to Supabase
     if (supabaseUrl && supabaseKey) {
       try {
         await fetch(`${supabaseUrl.trim()}/rest/v1/chat_messages`, {
