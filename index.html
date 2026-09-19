@@ -13,7 +13,7 @@
     }
 
     body {
-      background-color: #0b0b0e;
+      background-color: #0f0f13;
       color: #e2e8f0;
       height: 100vh;
       height: 100dvh;
@@ -27,34 +27,37 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 12px 16px;
-      background-color: #121218;
-      border-bottom: 1px solid #1e1e2d;
+      padding: 14px 20px;
+      background-color: transparent;
     }
 
     .brand {
       font-weight: 700;
-      font-size: 18px;
-      color: #a855f7;
+      font-size: 20px;
+      color: #c084fc;
+      letter-spacing: 0.5px;
     }
 
     .theme-btn {
       background: #1e1e2d;
-      border: 1px solid #2d2d3f;
+      border: 1px solid #3b2d54;
       color: #e2e8f0;
-      padding: 6px 10px;
-      border-radius: 6px;
-      font-size: 12px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 13px;
       cursor: pointer;
     }
 
     #chat-container {
       flex: 1;
       overflow-y: auto;
-      padding: 16px;
+      padding: 20px 16px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 20px;
+      max-width: 850px;
+      width: 100%;
+      margin: 0 auto;
     }
 
     .welcome-screen {
@@ -63,70 +66,75 @@
     }
 
     .welcome-screen h1 {
-      font-size: 28px;
-      color: #a855f7;
+      font-size: 32px;
+      color: #c084fc;
       margin-bottom: 8px;
     }
 
     .welcome-screen p {
       color: #94a3b8;
-      font-size: 14px;
+      font-size: 15px;
     }
 
-    .message {
-      max-width: 85%;
-      padding: 10px 14px;
-      border-radius: 12px;
-      font-size: 14px;
+    /* User Message - Compact Oval Bubble */
+    .message.user {
+      align-self: flex-end;
+      background-color: #2a1b4e;
+      color: #f3e8ff;
+      border: 1px solid #581c87;
+      padding: 10px 18px;
+      border-radius: 22px;
+      max-width: 80%;
+      font-size: 15px;
       line-height: 1.5;
       word-wrap: break-word;
     }
 
-    .message.user {
-      align-self: flex-end;
-      background-color: #8b5cf6;
-      color: #ffffff;
-      border-bottom-right-radius: 2px;
-    }
-
+    /* Gemini-Style AI Message - Pure text without box background */
     .message.assistant {
       align-self: flex-start;
-      background-color: #1a1a24;
-      border: 1px solid #272738;
+      background: transparent;
+      border: none;
       color: #e2e8f0;
-      border-bottom-left-radius: 2px;
+      padding: 4px 0;
+      width: 100%;
+      font-size: 15px;
+      line-height: 1.6;
+      word-wrap: break-word;
     }
 
     .chat-img-preview {
-      max-width: 200px;
-      max-height: 200px;
-      border-radius: 8px;
-      margin-bottom: 6px;
+      max-width: 240px;
+      max-height: 240px;
+      border-radius: 12px;
+      margin-bottom: 8px;
       display: block;
     }
 
     footer {
-      padding: 12px;
-      background-color: #0b0b0e;
-      border-top: 1px solid #1a1a24;
+      padding: 12px 16px 20px 16px;
+      background-color: transparent;
+      max-width: 850px;
+      width: 100%;
+      margin: 0 auto;
     }
 
     #image-preview-container {
       display: none;
       align-items: center;
-      gap: 8px;
-      padding: 6px 12px;
-      background: #121218;
-      border: 1px solid #272738;
+      gap: 10px;
+      padding: 8px 14px;
+      background: #1a1625;
+      border: 1px solid #3b2d54;
       border-bottom: none;
-      border-radius: 10px 10px 0 0;
+      border-radius: 16px 16px 0 0;
     }
 
     #image-preview-container img {
-      width: 40px;
-      height: 40px;
+      width: 44px;
+      height: 44px;
       object-fit: cover;
-      border-radius: 6px;
+      border-radius: 8px;
     }
 
     .remove-img-btn {
@@ -134,42 +142,50 @@
       color: white;
       border: none;
       border-radius: 50%;
-      width: 20px;
-      height: 20px;
+      width: 22px;
+      height: 22px;
       cursor: pointer;
       font-size: 12px;
-      line-height: 1;
     }
 
+    /* Round Gemini-Style Chat Box with Purplish Theme */
     .input-wrapper {
       display: flex;
       align-items: center;
-      background-color: #121218;
-      border: 1px solid #272738;
-      border-radius: 10px;
-      padding: 4px 6px 4px 8px;
-      gap: 8px;
+      background-color: #1a1625;
+      border: 1px solid #4c1d95;
+      border-radius: 28px;
+      padding: 6px 8px 6px 10px;
+      gap: 10px;
+      box-shadow: 0 4px 20px rgba(124, 58, 237, 0.15);
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
 
-    /* Plus (+) Button Styling */
+    .input-wrapper:focus-within {
+      border-color: #8b5cf6;
+      box-shadow: 0 4px 24px rgba(139, 92, 246, 0.3);
+    }
+
+    /* Plus Button Inside Chat Box */
     .add-file-btn {
-      background: #1e1e2d;
-      border: 1px solid #2d2d3f;
-      color: #a855f7;
+      background: #2a1b4e;
+      border: 1px solid #581c87;
+      color: #c084fc;
       font-size: 20px;
-      font-weight: bold;
-      width: 34px;
-      height: 34px;
-      border-radius: 8px;
+      font-weight: 300;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: background-color 0.2s, color 0.2s;
+      flex-shrink: 0;
     }
 
     .add-file-btn:hover {
-      background-color: #8b5cf6;
+      background-color: #7e22ce;
       color: #ffffff;
     }
 
@@ -178,28 +194,39 @@
       background: transparent;
       border: none;
       outline: none;
-      color: #ffffff;
-      font-size: 16px;
+      color: #f3e8ff;
+      font-size: 15px;
       padding: 8px 0;
     }
 
+    input[type="text"]::placeholder {
+      color: #94a3b8;
+    }
+
     .send-btn {
-      background-color: #8b5cf6;
+      background-color: #7c3aed;
       color: white;
       border: none;
-      padding: 8px 16px;
-      border-radius: 8px;
+      padding: 8px 18px;
+      border-radius: 20px;
       font-weight: 600;
       font-size: 14px;
       cursor: pointer;
+      transition: background-color 0.2s;
+      flex-shrink: 0;
+    }
+
+    .send-btn:hover {
+      background-color: #6d28d9;
     }
 
     body.light-mode { background-color: #f8fafc; color: #0f172a; }
-    body.light-mode header, body.light-mode footer { background-color: #ffffff; border-color: #e2e8f0; }
-    body.light-mode .input-wrapper, body.light-mode #image-preview-container { background-color: #ffffff; border-color: #cbd5e1; }
-    body.light-mode .add-file-btn { background-color: #f1f5f9; border-color: #cbd5e1; }
+    body.light-mode header, body.light-mode footer { background-color: transparent; }
+    body.light-mode .input-wrapper { background-color: #ffffff; border-color: #c084fc; box-shadow: 0 4px 16px rgba(192, 132, 252, 0.2); }
     body.light-mode input[type="text"] { color: #0f172a; }
-    body.light-mode .message.assistant { background-color: #ffffff; border-color: #e2e8f0; color: #0f172a; }
+    body.light-mode .add-file-btn { background-color: #f3e8ff; border-color: #d8b4fe; color: #7e22ce; }
+    body.light-mode .message.assistant { color: #0f172a; }
+    body.light-mode .message.user { background-color: #7e22ce; color: #ffffff; border-color: #6b21a8; }
   </style>
 </head>
 <body>
@@ -219,11 +246,10 @@
   <footer>
     <div id="image-preview-container">
       <img id="preview-img" src="" alt="preview" />
-      <span style="font-size: 12px; color: #94a3b8;">File attached</span>
+      <span style="font-size: 12px; color: #c084fc;">File attached</span>
       <button class="remove-img-btn" onclick="clearImageAttachment()">✕</button>
     </div>
     <div class="input-wrapper">
-      <!-- Plus Button -->
       <button class="add-file-btn" onclick="document.getElementById('file-input').click()" title="Add file or image">+</button>
       <input type="file" id="file-input" accept="image/*" style="display: none;" onchange="handleFileSelect(event)" />
       
@@ -231,7 +257,7 @@
         type="text" 
         id="user-input" 
         name="chat-message"
-        placeholder="Type a message or paste an image..." 
+        placeholder="Ask MAZ AI..." 
         autocomplete="off" 
         autocorrect="off" 
         autocapitalize="sentences"
