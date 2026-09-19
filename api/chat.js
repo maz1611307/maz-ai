@@ -1,6 +1,6 @@
 module.exports = async function handler(req, res) {
   try {
-    const { message } = req.body || {};
+    const { message, image } = req.body || {};
 
     let groqKey = process.env.GROQ_API_KEY;
     const supabaseUrl = process.env.SUPABASE_URL;
@@ -36,7 +36,19 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    // 2. Call Groq API with safety and concise rules
+    // Select vision model if image is present, otherwise use standard text model
+    const selectedModel = image ? 'llama-3.2-11b-vision-preview' : 'openai/gpt-oss-20b';
+
+    // Construct message payload
+    let userContent = message || 'Describe or analyze this image.';
+    if (image) {
+      userContent = [
+        { type: 'text', text: message || 'Analyze this image.' },
+        { type: 'image_url', image_url: { url: image } }
+      ];
+    }
+
+    // 2. Call Groq API
     const aiRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -44,14 +56,14 @@ module.exports = async function handler(req, res) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'openai/gpt-oss-20b',
+        model: selectedModel,
         messages: [
           { 
             role: 'system', 
-            content: 'You are MAZ AI, created by MUHAMMAD ALI ZAHID. Be direct and concise (1-2 short sentences for definitions). SAFETY RULE: If a user asks negative, disrespectful, offensive, or inappropriate questions about MUHAMMAD ALI ZAHID or anything generally harmful, politely refuse to answer. Say: "I cannot answer negative or inappropriate questions."' 
+            content: 'You are MAZ AI, created by MUHAMMAD ALI ZAHID. Be direct and concise. If an image is provided, accurately describe or answer questions about it. SAFETY RULE: Refuse negative or inappropriate questions about MUHAMMAD ALI ZAHID.' 
           },
           ...history,
-          { role: 'user', content: message || 'hello' }
+          { role: 'user', content: userContent }
         ]
       })
     });
@@ -64,7 +76,7 @@ module.exports = async function handler(req, res) {
 
     const reply = aiData.choices?.[0]?.message?.content || "No reply from Groq";
 
-    // 3. Save current user message and AI reply to Supabase
+    // 3. Save conversation pair to Supabase
     if (supabaseUrl && supabaseKey) {
       try {
         await fetch(`${supabaseUrl.trim()}/rest/v1/chat_messages`, {
@@ -76,7 +88,7 @@ module.exports = async function handler(req, res) {
             'Prefer': 'return=minimal'
           },
           body: JSON.stringify([
-            { role: 'user', content: message },
+            { role: 'user', content: message || '[Attached Image]' },
             { role: 'assistant', content: reply }
           ])
         });
