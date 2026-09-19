@@ -36,8 +36,8 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    // Active vision model on Groq
-    const selectedModel = image ? 'qwen/qwen3.6-27b' : 'openai/gpt-oss-20b';
+    // UPDATED: Active Vision model ID on Groq
+    const selectedModel = image ? 'qwen/qwen3.8-27b' : 'openai/gpt-oss-20b';
 
     // Construct message payload
     let userContent = message || 'Describe or analyze this image.';
