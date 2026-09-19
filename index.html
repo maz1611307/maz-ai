@@ -20,6 +20,7 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      transition: background-color 0.3s ease, color 0.3s ease;
     }
 
     /* Header Styling */
@@ -30,6 +31,7 @@
       padding: 12px 16px;
       background-color: #121218;
       border-bottom: 1px solid #1e1e2d;
+      transition: background-color 0.3s ease, border-color 0.3s ease;
     }
 
     .brand {
@@ -49,6 +51,7 @@
       display: flex;
       align-items: center;
       gap: 4px;
+      transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
     }
 
     /* Chat Area */
@@ -99,6 +102,7 @@
       border: 1px solid #272738;
       color: #e2e8f0;
       border-bottom-left-radius: 2px;
+      transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
     }
 
     /* Footer & Input Box */
@@ -106,6 +110,7 @@
       padding: 12px;
       background-color: #0b0b0e;
       border-top: 1px solid #1a1a24;
+      transition: background-color 0.3s ease, border-color 0.3s ease;
     }
 
     .input-wrapper {
@@ -116,6 +121,7 @@
       border-radius: 10px;
       padding: 4px 6px 4px 12px;
       gap: 8px;
+      transition: background-color 0.3s ease, border-color 0.3s ease;
     }
 
     .input-wrapper:focus-within {
@@ -131,6 +137,7 @@
       color: #ffffff;
       font-size: 16px; /* Prevents auto-zoom on mobile */
       padding: 8px 0;
+      transition: color 0.3s ease;
     }
 
     .send-btn {
@@ -146,6 +153,43 @@
 
     .send-btn:hover {
       background-color: #7c3aed;
+    }
+
+    /* Light Mode Styles */
+    body.light-mode {
+      background-color: #f8fafc;
+      color: #0f172a;
+    }
+
+    body.light-mode header,
+    body.light-mode footer {
+      background-color: #ffffff;
+      border-color: #e2e8f0;
+    }
+
+    body.light-mode .theme-btn {
+      background-color: #f1f5f9;
+      border-color: #cbd5e1;
+      color: #0f172a;
+    }
+
+    body.light-mode .input-wrapper {
+      background-color: #ffffff;
+      border-color: #cbd5e1;
+    }
+
+    body.light-mode input[type="text"] {
+      color: #0f172a;
+    }
+
+    body.light-mode .message.assistant {
+      background-color: #ffffff;
+      border-color: #e2e8f0;
+      color: #0f172a;
+    }
+
+    body.light-mode .welcome-screen p {
+      color: #64748b;
     }
 
     /* Responsive scaling for mobile screens */
@@ -192,6 +236,17 @@
     const chatContainer = document.getElementById('chat-container');
     const userInput = document.getElementById('user-input');
     const welcomeScreen = document.getElementById('welcome');
+    const themeToggleBtn = document.getElementById('theme-toggle');
+
+    // Theme Toggle Functionality
+    themeToggleBtn.addEventListener('click', () => {
+      document.body.classList.toggle('light-mode');
+      if (document.body.classList.contains('light-mode')) {
+        themeToggleBtn.textContent = '🌙 Dark Mode';
+      } else {
+        themeToggleBtn.textContent = '☀️ Light Mode';
+      }
+    });
 
     async function sendMessage() {
       const text = userInput.value.trim();
