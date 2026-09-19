@@ -12,7 +12,7 @@ module.exports = async function handler(req, res) {
 
     groqKey = groqKey.trim();
 
-    // 1. Fetch recent chat history from Supabase (last 6 messages)
+    // 1. Fetch recent chat history from Supabase
     let history = [];
     if (supabaseUrl && supabaseKey) {
       try {
@@ -25,7 +25,6 @@ module.exports = async function handler(req, res) {
         if (historyRes.ok) {
           const historyData = await historyRes.json();
           if (Array.isArray(historyData)) {
-            // Reverse so messages are in chronological order
             history = historyData.reverse().map(item => ({
               role: item.role,
               content: item.content
@@ -37,7 +36,7 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    // 2. Call Groq API
+    // 2. Call Groq API with concise response rules
     const aiRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -49,7 +48,7 @@ module.exports = async function handler(req, res) {
         messages: [
           { 
             role: 'system', 
-            content: 'You are MAZ AI, created by MUHAMMAD ALI ZAHID. Reply naturally to greetings like "hi" or "hello". Follow conversation context accurately.' 
+            content: 'You are MAZ AI, created by MUHAMMAD ALI ZAHID. Be extremely concise, direct, and to the point. If the user asks for a definition or a simple question, give ONLY the core definition or answer in 1-2 short sentences. Do NOT add unnecessary background, extra details, formulas, or long explanations unless specifically asked for.' 
           },
           ...history,
           { role: 'user', content: message || 'hello' }
@@ -65,7 +64,7 @@ module.exports = async function handler(req, res) {
 
     const reply = aiData.choices?.[0]?.message?.content || "No reply from Groq";
 
-    // 3. Save new message pair to Supabase
+    // 3. Save current user message and AI reply to Supabase
     if (supabaseUrl && supabaseKey) {
       try {
         await fetch(`${supabaseUrl.trim()}/rest/v1/chat_messages`, {
