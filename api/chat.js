@@ -16,18 +16,31 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    // Check if any message in history contains an image payload
-    const hasImage = history.some(msg => Array.isArray(msg.content));
+    // Check if the latest user message contains an image
+    const lastMessage = history[history.length - 1];
+    const isLatestImage = Array.isArray(lastMessage?.content);
 
-    // Valid Groq Model IDs
-    const modelToUse = hasImage ? "llama-3.2-11b-vision-preview" : "llama-3.3-70b-versatile";
+    // Active vision model on Groq
+    const modelToUse = isLatestImage ? "llama-3.2-11b-vision-instruct" : "llama-3.3-70b-versatile";
+
+    // Clean historical messages so base64 images from earlier turns don't break simple text chats
+    const cleanedHistory = history.map((msg, index) => {
+      if (index < history.length - 1 && Array.isArray(msg.content)) {
+        const textObj = msg.content.find(c => c.type === "text");
+        return {
+          role: msg.role,
+          content: textObj ? textObj.text : "[User sent an image]"
+        };
+      }
+      return msg;
+    });
 
     const systemInstruction = {
       role: "system",
-      content: "You are a helpful and polite assistant. Provide clear and helpful answers. SAFETY RULE: If the user uses bad words or inappropriate language, politely refuse to answer."
+      content: "You are a helpful and polite assistant. Provide clear and simple answers. Do not use complex markdown or LaTeX syntax."
     };
 
-    const fullMessagesPayload = [systemInstruction, ...history];
+    const fullMessagesPayload = [systemInstruction, ...cleanedHistory];
 
     const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
@@ -44,11 +57,10 @@ module.exports = async function handler(req, res) {
     const data = await groqRes.json();
 
     if (data.error) {
-      console.error("Groq Error:", data.error);
-      return res.status(200).json({ reply: `API Error: ${data.error.message || 'Check model name or API key.'}` });
+      return res.status(200).json({ reply: `API Error: ${data.error.message}` });
     }
 
-    let reply = data.choices?.[0]?.message?.content || "No response received from model.";
+    let reply = data.choices?.[0]?.message?.content || "No response received.";
 
     return res.status(200).json({ reply });
   } catch (err) {
