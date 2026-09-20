@@ -16,19 +16,35 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const modelToUse = "openai/gpt-oss-20b";
+    // Check if the latest message includes an image
+    const lastMessage = history[history.length - 1];
+    const isLatestImage = Array.isArray(lastMessage?.content);
 
-    // Clean old history to convert image objects into simple text
-    const cleanedHistory = history.map((msg) => {
-      if (Array.isArray(msg.content)) {
+    // Use vision model for images, and gpt-oss-20b for text
+    const modelToUse = isLatestImage ? "llama-3.2-90b-vision-preview" : "openai/gpt-oss-20b";
+
+    // Clean old conversation history so past images don't cause errors
+    const cleanedHistory = history.map((msg, index) => {
+      // If it's an older message and contains image content, convert it to plain text
+      if (index < history.length - 1 && Array.isArray(msg.content)) {
         const textObj = msg.content.find(c => c.type === "text");
         return {
           role: msg.role,
-          content: textObj ? textObj.text : "[Uploaded Content]"
+          content: textObj ? textObj.text : "[Uploaded Image]"
         };
       }
       return msg;
     });
+
+    const requestBody = {
+      model: modelToUse,
+      messages: cleanedHistory
+    };
+
+    // Add reasoning effort only when using gpt-oss-20b
+    if (!isLatestImage) {
+      requestBody.reasoning_effort = "medium";
+    }
 
     const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
@@ -36,11 +52,7 @@ module.exports = async function handler(req, res) {
         "Authorization": `Bearer ${groqApiKey.trim()}`,
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({
-        model: modelToUse,
-        messages: cleanedHistory,
-        reasoning_effort: "medium"
-      })
+      body: JSON.stringify(requestBody)
     });
 
     const data = await groqRes.json();
