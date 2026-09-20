@@ -28,10 +28,10 @@ module.exports = async function handler(req, res) {
 
   // 2. POST New Message & Get AI Reply
   if (req.method === 'POST') {
-    const { message, user_email, chat_id, chat_title } = req.body || {};
+    const { message, image, user_email, chat_id, chat_title } = req.body || {};
 
-    if (!user_email || !message) {
-      return res.status(400).json({ error: 'User email and message required.' });
+    if (!user_email || (!message && !image)) {
+      return res.status(400).json({ error: 'User email and message or image required.' });
     }
 
     // Save user message to Supabase
@@ -45,7 +45,13 @@ module.exports = async function handler(req, res) {
             "Content-Type": "application/json",
             "Prefer": "return=minimal"
           },
-          body: JSON.stringify({ user_email, chat_id, chat_title, role: 'user', content: message })
+          body: JSON.stringify({ 
+            user_email, 
+            chat_id, 
+            chat_title, 
+            role: 'user', 
+            content: image ? "[Image Attached] " + (message || "") : message 
+          })
         });
       } catch (err) {}
     }
@@ -54,6 +60,18 @@ module.exports = async function handler(req, res) {
     let aiResponseText = "Groq API key is missing on Vercel.";
     if (groqApiKey) {
       try {
+        // Select vision model if image is provided, otherwise text model
+        let modelToUse = "openai/gpt-oss-20b";
+        let messageContent = message || "What is in this image?";
+
+        if (image) {
+          modelToUse = "llama-3.2-11b-vision-preview";
+          messageContent = [
+            { type: "text", text: message || "Describe this image in simple detail." },
+            { type: "image_url", image_url: { url: image } }
+          ];
+        }
+
         const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
           method: "POST",
           headers: {
@@ -61,13 +79,13 @@ module.exports = async function handler(req, res) {
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            model: "openai/gpt-oss-20b",
+            model: modelToUse,
             messages: [
               { 
                 role: "system", 
                 content: "You are a helpful and polite assistant. Provide short, direct, and to the point answers in simple plain text. Do NOT use markdown symbols like **, ###, or LaTeX math symbols. SAFETY RULE: If the user uses bad words, dirty talk, rude language, or asks inappropriate questions, politely refuse to answer and ask them to keep the conversation respectful." 
               },
-              { role: "user", content: message }
+              { role: "user", content: messageContent }
             ]
           })
         });
