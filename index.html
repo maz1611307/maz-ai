@@ -51,7 +51,7 @@
     .message.user { align-self: flex-end; background-color: #2a1b4e; color: #f3e8ff; border: 1px solid #581c87; padding: 10px 18px; border-radius: 22px; max-width: 80%; font-size: 15px; }
     .message.assistant { align-self: flex-start; color: #e2e8f0; padding: 4px 0; width: 100%; font-size: 15px; line-height: 1.6; }
 
-    .chat-img { max-width: 250px; max-height: 250px; border-radius: 12px; display: block; margin-bottom: 8px; border: 1px solid #7c3aed; }
+    .chat-img { max-width: 250px; max-height: 250px; border-radius: 12px; display: block; margin-bottom: 8px; border: 1px solid #7c3aed; object-fit: cover; }
 
     footer { padding: 12px 16px 20px 16px; max-width: 850px; width: 100%; margin: 0 auto; }
     .input-card { display: flex; flex-direction: column; background-color: #1a1625; border: 1px solid #4c1d95; border-radius: 24px; padding: 10px 14px; gap: 8px; }
@@ -69,7 +69,23 @@
     .add-file-btn { background: transparent; border: none; color: #c084fc; font-size: 24px; cursor: pointer; line-height: 1; display: flex; align-items: center; justify-content: center; }
     .think-btn { display: flex; align-items: center; gap: 6px; background-color: #271f38; border: 1px solid #4c1d95; color: #d8b4fe; padding: 6px 12px; border-radius: 20px; font-size: 13px; cursor: pointer; }
     .think-btn.active { background-color: #7c3aed; color: white; }
-    .send-arrow-btn { background-color: #8b5cf6; color: white; border: none; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    
+    /* Updated Side Arrow Button Styling */
+    .send-arrow-btn { 
+      background-color: #8b5cf6; 
+      color: white; 
+      border: none; 
+      width: 36px; 
+      height: 36px; 
+      border-radius: 50%; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      cursor: pointer; 
+      font-size: 18px;
+      line-height: 1;
+    }
+    .send-arrow-btn:hover { background-color: #7c3aed; }
   </style>
 </head>
 <body>
@@ -88,7 +104,7 @@
     </div>
   </div>
 
-  <!-- Main App Layout (Single Screen) -->
+  <!-- Main App Layout -->
   <div class="main-workspace">
     <header>
       <div class="brand">
@@ -99,7 +115,6 @@
         <span>MAZ AI</span>
       </div>
 
-      <!-- Big plus icon in corner to reset/start new chat -->
       <button class="top-new-chat-btn" title="New Chat" onclick="clearChat()">+</button>
     </header>
 
@@ -114,7 +129,6 @@
         </div>
 
         <div class="input-row">
-          <!-- Added Paste event listener for Ctrl+V image support -->
           <input type="text" id="user-input" placeholder="Ask MAZ AI or paste image..." onkeydown="if(event.key==='Enter') sendMessage()" onpaste="handlePaste(event)" />
         </div>
         <div class="actions-row">
@@ -126,7 +140,8 @@
               🧠 <span>Think</span>
             </button>
           </div>
-          <button class="send-arrow-btn" onclick="sendMessage()">↑</button>
+          <!-- Side arrow icon -->
+          <button class="send-arrow-btn" onclick="sendMessage()">➔</button>
         </div>
       </div>
     </footer>
@@ -160,7 +175,6 @@
       removeSelectedImage();
     }
 
-    // Handle File Selection via File Picker
     function handleImageSelect(event) {
       const file = event.target.files[0];
       if (file) {
@@ -168,20 +182,18 @@
       }
     }
 
-    // Handle Image Paste (Ctrl + V / Copied Images)
     function handlePaste(event) {
       const items = (event.clipboardData || event.originalEvent.clipboardData).items;
       for (let item of items) {
         if (item.type.indexOf("image") !== -1) {
           const file = item.getAsFile();
           processImageFile(file);
-          event.preventDefault(); // Stop image text string from pasting into input box
+          event.preventDefault();
           break;
         }
       }
     }
 
-    // Convert Image File to Base64 and Show Preview
     function processImageFile(file) {
       const reader = new FileReader();
       reader.onload = function(e) {
@@ -233,7 +245,7 @@
       let userMessageObj = { role: "user" };
       if (imageToSend) {
         userMessageObj.content = [
-          { type: "text", text: text || "Describe this image." },
+          { type: "text", text: text || "What is in this image?" },
           { type: "image_url", image_url: { url: imageToSend } }
         ];
       } else {
@@ -257,7 +269,7 @@
         });
 
         const data = await res.json();
-        const replyText = data.reply || "No response.";
+        const replyText = data.reply || "No response received.";
 
         addMessageToUI('assistant', replyText);
         chatHistory.push({ role: "assistant", content: replyText });
