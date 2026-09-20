@@ -46,6 +46,25 @@
     #chat-container {
       flex: 1; overflow-y: auto; padding: 20px 16px; display: flex; flex-direction: column;
       gap: 20px; max-width: 850px; width: 100%; margin: 0 auto;
+      
+      /* Standard Scrollbar Property for Firefox */
+      scrollbar-width: thin;
+      scrollbar-color: #3b2164 #0f0f13;
+    }
+
+    /* Custom Webkit Scrollbar Styling (Chrome, Safari, Edge) */
+    #chat-container::-webkit-scrollbar {
+      width: 6px;
+    }
+    #chat-container::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    #chat-container::-webkit-scrollbar-thumb {
+      background: #3b2164;
+      border-radius: 10px;
+    }
+    #chat-container::-webkit-scrollbar-thumb:hover {
+      background: #7c3aed;
     }
 
     /* Empty state centered brand element */
