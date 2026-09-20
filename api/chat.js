@@ -14,16 +14,26 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ reply: "Groq API key is missing on Vercel." });
   }
 
-  // Updated system prompt: Only mention creator if explicitly asked
+  // System prompt
   const systemMessage = {
     role: "system",
-    content: "You are MAZ AI, a helpful and smart AI assistant. Answer the user's questions directly without intro greetings. Do NOT state who created or owns you in every message. ONLY state that you were created and owned by Muhammad Ali Zahid if the user specifically asks who created, built, or owns you."
+    content: "You are MAZ AI, a helpful and smart AI assistant. Answer the user's questions directly. Do NOT state who created or owns you unless the user specifically asks."
   };
 
   try {
-    const formattedMessages = [systemMessage, ...history];
+    // Format messages for Groq API
+    const formattedMessages = [
+      systemMessage,
+      ...history.map(msg => {
+        // Ensure string content stays simple text
+        if (typeof msg.content === 'string') {
+          return { role: msg.role, content: msg.content };
+        }
+        return msg;
+      })
+    ];
 
-    const response = await fetch("[https://api.groq.com/openai/v1/chat/completions](https://api.groq.com/openai/v1/chat/completions)", {
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${groqApiKey}`,
@@ -37,10 +47,17 @@ module.exports = async function handler(req, res) {
     });
 
     const data = await response.json();
-    const reply = data.choices?.[0]?.message?.content || "No response received.";
 
+    if (data.error) {
+      console.error("Groq API Error:", data.error);
+      return res.status(200).json({ reply: `API Error: ${data.error.message || 'Something went wrong.'}` });
+    }
+
+    const reply = data.choices?.[0]?.message?.content || "No response received from model.";
     return res.status(200).json({ reply });
+
   } catch (error) {
-    return res.status(500).json({ error: "Failed to fetch response from Groq API." });
+    console.error("Server Error:", error);
+    return res.status(500).json({ reply: "Server error occurred. Please try again." });
   }
 };
