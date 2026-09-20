@@ -1,26 +1,29 @@
-const { createClient } = require('@supabase/supabase-js');
-
 const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseKey = process.env.SUPABASE_ANON_KEY;
 const groqApiKey = process.env.GROQ_API_KEY;
-
-const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supabaseKey) : null;
 
 module.exports = async function handler(req, res) {
   // 1. GET User Chat History
   if (req.method === 'GET') {
     const { user_email } = req.query;
     if (!user_email) return res.status(400).json({ error: 'User email required' });
-    if (!supabase) return res.status(500).json({ error: 'Supabase credentials missing in Vercel' });
 
-    const { data, error } = await supabase
-      .from('chat_messages')
-      .select('*')
-      .eq('user_email', user_email)
-      .order('created_at', { ascending: true });
+    if (!supabaseUrl || !supabaseKey) {
+      return res.status(200).json({ messages: [] });
+    }
 
-    if (error) return res.status(500).json({ error: error.message });
-    return res.status(200).json({ messages: data || [] });
+    try {
+      const response = await fetch(`${supabaseUrl}/rest/v1/chat_messages?user_email=eq.${encodeURIComponent(user_email)}&order=created_at.asc`, {
+        headers: {
+          "apikey": supabaseKey,
+          "Authorization": `Bearer ${supabaseKey}`
+        }
+      });
+      const data = await response.json();
+      return res.status(200).json({ messages: Array.isArray(data) ? data : [] });
+    } catch (err) {
+      return res.status(200).json({ messages: [] });
+    }
   }
 
   // 2. POST New Message & Get AI Reply
@@ -31,14 +34,23 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'User email and message required.' });
     }
 
-    // Save user message to Supabase
-    if (supabase) {
-      await supabase.from('chat_messages').insert([
-        { user_email, chat_id, chat_title, role: 'user', content: message }
-      ]);
+    // Save user message
+    if (supabaseUrl && supabaseKey) {
+      try {
+        await fetch(`${supabaseUrl}/rest/v1/chat_messages`, {
+          method: "POST",
+          headers: {
+            "apikey": supabaseKey,
+            "Authorization": `Bearer ${supabaseKey}`,
+            "Content-Type": "application/json",
+            "Prefer": "return=minimal"
+          },
+          body: JSON.stringify({ user_email, chat_id, chat_title, role: 'user', content: message })
+        });
+      } catch (err) {}
     }
 
-    // Call Groq API
+    // Call Groq AI
     let aiResponseText = "Groq API key is missing on Vercel.";
     if (groqApiKey) {
       try {
@@ -57,15 +69,24 @@ module.exports = async function handler(req, res) {
         const groqData = await groqRes.json();
         aiResponseText = groqData.choices?.[0]?.message?.content || "No response received.";
       } catch (err) {
-        aiResponseText = "Error generating response from AI.";
+        aiResponseText = "Error connecting to AI service.";
       }
     }
 
-    // Save AI message to Supabase
-    if (supabase) {
-      await supabase.from('chat_messages').insert([
-        { user_email, chat_id, chat_title, role: 'assistant', content: aiResponseText }
-      ]);
+    // Save AI reply
+    if (supabaseUrl && supabaseKey) {
+      try {
+        await fetch(`${supabaseUrl}/rest/v1/chat_messages`, {
+          method: "POST",
+          headers: {
+            "apikey": supabaseKey,
+            "Authorization": `Bearer ${supabaseKey}`,
+            "Content-Type": "application/json",
+            "Prefer": "return=minimal"
+          },
+          body: JSON.stringify({ user_email, chat_id, chat_title, role: 'assistant', content: aiResponseText })
+        });
+      } catch (err) {}
     }
 
     return res.status(200).json({ reply: aiResponseText });
