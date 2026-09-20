@@ -34,7 +34,7 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'User email and message required.' });
     }
 
-    // Save user message
+    // Save user message to Supabase
     if (supabaseUrl && supabaseKey) {
       try {
         await fetch(`${supabaseUrl}/rest/v1/chat_messages`, {
@@ -50,7 +50,7 @@ module.exports = async function handler(req, res) {
       } catch (err) {}
     }
 
-    // Call Groq AI
+    // Call Groq API
     let aiResponseText = "Groq API key is missing on Vercel.";
     if (groqApiKey) {
       try {
@@ -61,19 +61,24 @@ module.exports = async function handler(req, res) {
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            model: "llama-3.3-70b-versatile",
+            model: "llama-3.1-8b-instant",
             messages: [{ role: "user", content: message }]
           })
         });
 
         const groqData = await groqRes.json();
-        aiResponseText = groqData.choices?.[0]?.message?.content || "No response received.";
+        
+        if (groqData.error) {
+          aiResponseText = "Groq Error: " + (groqData.error.message || "Invalid response");
+        } else {
+          aiResponseText = groqData.choices?.[0]?.message?.content || "No response received.";
+        }
       } catch (err) {
-        aiResponseText = "Error connecting to AI service.";
+        aiResponseText = "Error connecting to Groq AI service.";
       }
     }
 
-    // Save AI reply
+    // Save AI reply to Supabase
     if (supabaseUrl && supabaseKey) {
       try {
         await fetch(`${supabaseUrl}/rest/v1/chat_messages`, {
