@@ -16,7 +16,7 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
 
-    body { background-color: #0f0f13; color: #e2e8f0; height: 100vh; display: flex; overflow: hidden; }
+    body { background-color: #0f0f13; color: #e2e8f0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
     /* Login Screen Overlay */
     #login-overlay {
@@ -29,31 +29,19 @@
       text-align: center; display: flex; flex-direction: column; align-items: center; gap: 16px;
     }
 
-    /* Main App Layout */
-    .app-container { display: flex; width: 100vw; height: 100vh; }
-
-    .sidebar {
-      width: 260px; background-color: #120d1d; border-right: 1px solid #2e2342;
-      display: flex; flex-direction: column; padding: 16px; gap: 16px;
-    }
-
-    .new-chat-btn {
-      background-color: #7c3aed; color: white; border: none; border-radius: 12px;
-      padding: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
-    }
-    .new-chat-btn:hover { background-color: #6d28d9; }
-
-    .user-profile {
-      margin-top: auto; padding-top: 10px; border-top: 1px solid #2e2342; display: flex; align-items: center;
-      justify-content: space-between; font-size: 13px; color: #cbd5e1;
-    }
-    .logout-btn { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 12px; }
-
     /* Main Workspace */
-    .main-workspace { flex: 1; display: flex; flex-direction: column; height: 100%; }
+    .main-workspace { flex: 1; display: flex; flex-direction: column; height: 100vh; width: 100vw; }
 
-    header { display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; }
+    header { display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; border-bottom: 1px solid #2e2342; }
     .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 20px; color: #c084fc; }
+
+    /* Corner New Chat Plus Button */
+    .top-new-chat-btn {
+      background-color: #7c3aed; color: white; border: none; width: 40px; height: 40px;
+      border-radius: 50%; font-size: 24px; cursor: pointer; display: flex; align-items: center;
+      justify-content: center; font-weight: 300; transition: background 0.2s;
+    }
+    .top-new-chat-btn:hover { background-color: #6d28d9; }
 
     #chat-container {
       flex: 1; overflow-y: auto; padding: 20px 16px; display: flex; flex-direction: column;
@@ -100,84 +88,65 @@
     </div>
   </div>
 
-  <!-- Main App Layout -->
-  <div class="app-container">
-    <aside class="sidebar">
-      <button class="new-chat-btn" onclick="clearChat()">
-        <span>+</span> New Chat
-      </button>
-
-      <div class="user-profile">
-        <span id="user-display-email">User</span>
-        <button class="logout-btn" onclick="logout()">Logout</button>
+  <!-- Main App Layout (Single Screen) -->
+  <div class="main-workspace">
+    <header>
+      <div class="brand">
+        <svg width="28" height="28" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="50" cy="50" r="48" fill="#120924" stroke="#8b5cf6" stroke-width="4"/>
+          <path d="M 22 68 C 22 68 20 32 30 26 C 38 20 42 58 48 58 C 54 58 56 28 66 26 C 74 24 76 68 82 66" stroke="#c084fc" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>MAZ AI</span>
       </div>
-    </aside>
 
-    <main class="main-workspace">
-      <header>
-        <div class="brand">
-          <svg width="28" height="28" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="50" cy="50" r="48" fill="#120924" stroke="#8b5cf6" stroke-width="4"/>
-            <path d="M 22 68 C 22 68 20 32 30 26 C 38 20 42 58 48 58 C 54 58 56 28 66 26 C 74 24 76 68 82 66" stroke="#c084fc" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <span>MAZ AI</span>
+      <!-- Big plus icon in corner to reset/start new chat -->
+      <button class="top-new-chat-btn" title="New Chat" onclick="clearChat()">+</button>
+    </header>
+
+    <div id="chat-container"></div>
+
+    <footer>
+      <div class="input-card">
+        <!-- Image Preview Area -->
+        <div id="image-preview-container">
+          <img id="image-preview" src="" alt="Selected Preview" />
+          <button id="remove-image-btn" onclick="removeSelectedImage()">✕</button>
         </div>
-      </header>
 
-      <div id="chat-container"></div>
-
-      <footer>
-        <div class="input-card">
-          <!-- Image Preview Area -->
-          <div id="image-preview-container">
-            <img id="image-preview" src="" alt="Selected Preview" />
-            <button id="remove-image-btn" onclick="removeSelectedImage()">✕</button>
-          </div>
-
-          <div class="input-row">
-            <input type="text" id="user-input" placeholder="Ask MAZ AI..." onkeydown="if(event.key==='Enter') sendMessage()" />
-          </div>
-          <div class="actions-row">
-            <div class="actions-left">
-              <button class="add-file-btn" title="Add file" onclick="document.getElementById('file-input').click()">+</button>
-              <input type="file" id="file-input" accept="image/*" style="display: none;" onchange="handleImageSelect(event)" />
-
-              <button class="think-btn" id="think-toggle" onclick="toggleThink()">
-                🧠 <span>Think</span>
-              </button>
-            </div>
-            <button class="send-arrow-btn" onclick="sendMessage()">↑</button>
-          </div>
+        <div class="input-row">
+          <!-- Added Paste event listener for Ctrl+V image support -->
+          <input type="text" id="user-input" placeholder="Ask MAZ AI or paste image..." onkeydown="if(event.key==='Enter') sendMessage()" onpaste="handlePaste(event)" />
         </div>
-      </footer>
-    </main>
+        <div class="actions-row">
+          <div class="actions-left">
+            <button class="add-file-btn" title="Add file" onclick="document.getElementById('file-input').click()">+</button>
+            <input type="file" id="file-input" accept="image/*" style="display: none;" onchange="handleImageSelect(event)" />
+
+            <button class="think-btn" id="think-toggle" onclick="toggleThink()">
+              🧠 <span>Think</span>
+            </button>
+          </div>
+          <button class="send-arrow-btn" onclick="sendMessage()">↑</button>
+        </div>
+      </div>
+    </footer>
   </div>
 
   <script>
     let currentUserEmail = localStorage.getItem('maz_user_email') || null;
     let isThinkActive = false;
     let selectedImageBase64 = null;
-    
-    // Memory array to keep track of current conversation
     let chatHistory = [];
 
     if (currentUserEmail) {
       document.getElementById('login-overlay').style.display = 'none';
-      document.getElementById('user-display-email').textContent = currentUserEmail;
     }
 
     function handleCredentialResponse(response) {
       const responsePayload = jwt_decode(response.credential);
       currentUserEmail = responsePayload.email;
       localStorage.setItem('maz_user_email', currentUserEmail);
-      
       document.getElementById('login-overlay').style.display = 'none';
-      document.getElementById('user-display-email').textContent = currentUserEmail;
-    }
-
-    function logout() {
-      localStorage.removeItem('maz_user_email');
-      location.reload();
     }
 
     function toggleThink() {
@@ -187,20 +156,40 @@
 
     function clearChat() {
       document.getElementById('chat-container').innerHTML = '';
-      chatHistory = []; // Reset memory for a fresh conversation
+      chatHistory = [];
+      removeSelectedImage();
     }
 
+    // Handle File Selection via File Picker
     function handleImageSelect(event) {
       const file = event.target.files[0];
       if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          selectedImageBase64 = e.target.result;
-          document.getElementById('image-preview').src = selectedImageBase64;
-          document.getElementById('image-preview-container').style.display = 'block';
-        };
-        reader.readAsDataURL(file);
+        processImageFile(file);
       }
+    }
+
+    // Handle Image Paste (Ctrl + V / Copied Images)
+    function handlePaste(event) {
+      const items = (event.clipboardData || event.originalEvent.clipboardData).items;
+      for (let item of items) {
+        if (item.type.indexOf("image") !== -1) {
+          const file = item.getAsFile();
+          processImageFile(file);
+          event.preventDefault(); // Stop image text string from pasting into input box
+          break;
+        }
+      }
+    }
+
+    // Convert Image File to Base64 and Show Preview
+    function processImageFile(file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        selectedImageBase64 = e.target.result;
+        document.getElementById('image-preview').src = selectedImageBase64;
+        document.getElementById('image-preview-container').style.display = 'block';
+      };
+      reader.readAsDataURL(file);
     }
 
     function removeSelectedImage() {
@@ -239,10 +228,8 @@
 
       if ((!text && !imageToSend) || !currentUserEmail) return;
 
-      // Render user input in UI
       addMessageToUI('user', text, imageToSend);
 
-      // Build message payload for memory
       let userMessageObj = { role: "user" };
       if (imageToSend) {
         userMessageObj.content = [
@@ -253,7 +240,6 @@
         userMessageObj.content = text;
       }
 
-      // Add user message to conversation memory
       chatHistory.push(userMessageObj);
 
       input.value = '';
@@ -264,7 +250,7 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            history: chatHistory, // Sending full memory array
+            history: chatHistory,
             user_email: currentUserEmail,
             think: isThinkActive
           })
@@ -273,10 +259,7 @@
         const data = await res.json();
         const replyText = data.reply || "No response.";
 
-        // Render assistant reply
         addMessageToUI('assistant', replyText);
-
-        // Add assistant response to conversation memory
         chatHistory.push({ role: "assistant", content: replyText });
 
       } catch (err) {
