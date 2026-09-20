@@ -48,6 +48,28 @@
       gap: 20px; max-width: 850px; width: 100%; margin: 0 auto;
     }
 
+    /* Empty state centered brand element */
+    .welcome-placeholder {
+      margin: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 12px;
+      user-select: none;
+    }
+    .welcome-placeholder h1 {
+      font-size: 32px;
+      font-weight: 700;
+      color: #c084fc;
+      letter-spacing: 0.5px;
+    }
+    .welcome-placeholder p {
+      font-size: 15px;
+      color: #94a3b8;
+    }
+
     .message.user { align-self: flex-end; background-color: #2a1b4e; color: #f3e8ff; border: 1px solid #581c87; padding: 10px 18px; border-radius: 22px; max-width: 80%; font-size: 15px; }
     .message.assistant { align-self: flex-start; color: #e2e8f0; padding: 4px 0; width: 100%; font-size: 15px; line-height: 1.6; }
 
@@ -79,7 +101,7 @@
 
     footer { padding: 12px 16px 20px 16px; max-width: 850px; width: 100%; margin: 0 auto; }
     .input-card { display: flex; flex-direction: column; background-color: #1a1625; border: 1px solid #4c1d95; border-radius: 24px; padding: 10px 14px; gap: 8px; }
-    
+
     /* Image Preview Area */
     #image-preview-container { display: none; position: relative; width: fit-content; margin-bottom: 4px; }
     #image-preview { max-width: 90px; max-height: 90px; border-radius: 10px; border: 1px solid #7c3aed; object-fit: cover; }
@@ -93,7 +115,7 @@
     .add-file-btn { background: transparent; border: none; color: #c084fc; font-size: 24px; cursor: pointer; line-height: 1; display: flex; align-items: center; justify-content: center; }
     .think-btn { display: flex; align-items: center; gap: 6px; background-color: #271f38; border: 1px solid #4c1d95; color: #d8b4fe; padding: 6px 12px; border-radius: 20px; font-size: 13px; cursor: pointer; }
     .think-btn.active { background-color: #7c3aed; color: white; }
-    
+
     /* Side Arrow Send Button */
     .send-arrow-btn { 
       background-color: #8b5cf6; 
@@ -119,7 +141,7 @@
     <div class="login-card">
       <h2 style="color: #c084fc;">Welcome to MAZ AI</h2>
       <p style="color: #94a3b8; font-size: 14px;">Sign in with Google to use MAZ AI</p>
-      
+
       <div id="g_id_onload"
            data-client_id="38665812589-0h1ouegqmkh9ug7fehlj5seudglhf5rs.apps.googleusercontent.com"
            data-callback="handleCredentialResponse">
@@ -181,6 +203,25 @@
       document.getElementById('login-overlay').style.display = 'none';
     }
 
+    // Initialize initial centered state on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      renderEmptyState();
+    });
+
+    function renderEmptyState() {
+      const container = document.getElementById('chat-container');
+      container.innerHTML = `
+        <div class="welcome-placeholder" id="welcome-placeholder">
+          <svg width="64" height="64" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="50" cy="50" r="48" fill="#120924" stroke="#8b5cf6" stroke-width="4"/>
+            <path d="M 22 68 C 22 68 20 32 30 26 C 38 20 42 58 48 58 C 54 58 56 28 66 26 C 74 24 76 68 82 66" stroke="#c084fc" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <h1>MAZ AI</h1>
+          <p>How can I help you today?</p>
+        </div>
+      `;
+    }
+
     function handleCredentialResponse(response) {
       const responsePayload = jwt_decode(response.credential);
       currentUserEmail = responsePayload.email;
@@ -194,9 +235,9 @@
     }
 
     function clearChat() {
-      document.getElementById('chat-container').innerHTML = '';
       chatHistory = [];
       removeSelectedImage();
+      renderEmptyState();
     }
 
     function handleImageSelect(event) {
@@ -236,21 +277,15 @@
     }
 
     // Convert simple markdown (bold, inline code, "- " lists, line breaks)
-    // into styled HTML for assistant messages.
     function renderMarkdown(text) {
-      // Escape HTML first to avoid injection
       let escaped = text
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
 
-      // Bold: **text** -> <strong>text</strong>
       escaped = escaped.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-
-      // Inline code: `text` -> <code>text</code>
       escaped = escaped.replace(/`([^`]+)`/g, "<code>$1</code>");
 
-      // Convert lines into list items / paragraphs
       const lines = escaped.split("\n");
       let html = "";
       let inList = false;
@@ -284,6 +319,13 @@
 
     function addMessageToUI(role, text, image) {
       const container = document.getElementById('chat-container');
+
+      // Remove center placeholder when messages start
+      const placeholder = document.getElementById('welcome-placeholder');
+      if (placeholder) {
+        placeholder.remove();
+      }
+
       const div = document.createElement('div');
       div.className = `message ${role}`;
 
