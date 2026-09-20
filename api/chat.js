@@ -13,7 +13,7 @@ module.exports = async function handler(req, res) {
     }
 
     try {
-      const response = await fetch(`${supabaseUrl}/rest/v1/chat_messages?user_email=eq.${encodeURIComponent(user_email)}&order=created_at.asc`, {
+      const response = await fetch(`${supabaseUrl}/rest/v1/chat_messages?user_email=${encodeURIComponent(user_email)}&order=created_at.asc`, {
         headers: {
           "apikey": supabaseKey,
           "Authorization": `Bearer ${supabaseKey}`
@@ -65,7 +65,7 @@ module.exports = async function handler(req, res) {
             messages: [
               { 
                 role: "system", 
-                content: "You are a helpful assistant. Provide short, direct, and to the point answers. Do NOT use markdown symbols like **, ###, or LaTeX math symbols. Speak in simple plain text only." 
+                content: "You are a helpful and polite assistant. Provide short, direct, and to the point answers in simple plain text. Do NOT use markdown symbols like **, ###, or LaTeX math symbols. SAFETY RULE: If the user uses bad words, dirty talk, rude language, or asks inappropriate questions, politely refuse to answer and ask them to keep the conversation respectful." 
               },
               { role: "user", content: message }
             ]
