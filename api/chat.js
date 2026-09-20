@@ -20,11 +20,11 @@ module.exports = async function handler(req, res) {
     const lastMessage = history[history.length - 1];
     const isLatestImage = Array.isArray(lastMessage?.content);
 
-    // Use a Groq vision model for images, gpt-oss-20b for plain text.
-    // llama-3.2-90b-vision-preview is retired on Groq — use llama-4 scout/maverick instead.
-    // Scout = faster/cheaper, Maverick = stronger reasoning on images. Swap as needed.
+    // Use Groq's vision model for images, gpt-oss-20b for plain text.
+    // As of now, qwen/qwen3.8-27b is Groq's only supported vision model
+    // (the earlier llama-3.2-vision and llama-4 scout/maverick vision models were retired).
     const modelToUse = isLatestImage
-      ? "meta-llama/llama-4-scout-17b-16e-instruct"
+      ? "qwen/qwen3.8-27b"
       : "openai/gpt-oss-20b";
 
     // Clean old conversation history so past images don't cause errors
