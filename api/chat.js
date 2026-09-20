@@ -20,12 +20,16 @@ module.exports = async function handler(req, res) {
     const lastMessage = history[history.length - 1];
     const isLatestImage = Array.isArray(lastMessage?.content);
 
-    // Use vision model for images, and gpt-oss-20b for text
-    const modelToUse = isLatestImage ? "llama-3.2-90b-vision-preview" : "openai/gpt-oss-20b";
+    // Use a Groq vision model for images, gpt-oss-20b for plain text.
+    // llama-3.2-90b-vision-preview is retired on Groq — use llama-4 scout/maverick instead.
+    // Scout = faster/cheaper, Maverick = stronger reasoning on images. Swap as needed.
+    const modelToUse = isLatestImage
+      ? "meta-llama/llama-4-scout-17b-16e-instruct"
+      : "openai/gpt-oss-20b";
 
     // Clean old conversation history so past images don't cause errors
+    // (only the LATEST message is allowed to carry image content)
     const cleanedHistory = history.map((msg, index) => {
-      // If it's an older message and contains image content, convert it to plain text
       if (index < history.length - 1 && Array.isArray(msg.content)) {
         const textObj = msg.content.find(c => c.type === "text");
         return {
@@ -41,7 +45,7 @@ module.exports = async function handler(req, res) {
       messages: cleanedHistory
     };
 
-    // Add reasoning effort only when using gpt-oss-20b
+    // reasoning_effort is only supported by gpt-oss-20b
     if (!isLatestImage) {
       requestBody.reasoning_effort = "medium";
     }
