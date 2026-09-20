@@ -10,54 +10,71 @@ module.exports = async function handler(req, res) {
   }
 
   const groqApiKey = process.env.GROQ_API_KEY;
+
   if (!groqApiKey) {
     return res.status(200).json({ reply: "Groq API key is missing on Vercel." });
   }
 
-  // System prompt
-  const systemMessage = {
-    role: "system",
-    content: "You are MAZ AI, a helpful and smart AI assistant. Answer the user's questions directly. Do NOT state who created or owns you unless the user specifically asks."
-  };
-
   try {
-    // Format messages for Groq API
-    const formattedMessages = [
-      systemMessage,
-      ...history.map(msg => {
-        // Ensure string content stays simple text
-        if (typeof msg.content === 'string') {
-          return { role: msg.role, content: msg.content };
-        }
-        return msg;
-      })
-    ];
+    // Check if the latest message includes an image
+    const lastMessage = history[history.length - 1];
+    const isLatestImage = Array.isArray(lastMessage?.content);
 
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${groqApiKey}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
-        messages: formattedMessages,
-        temperature: 0.7
-      })
+    // Use Groq's vision model for images, gpt-oss-20b for plain text.
+    // As of now, qwen/qwen3.8-27b is Groq's only supported vision model
+    // (the earlier llama-3.2-vision and llama-4 scout/maverick vision models were retired).
+    const modelToUse = isLatestImage
+      ? "qwen/qwen3.8-27b"
+      : "openai/gpt-oss-20b";
+
+    // Clean old conversation history so past images don't cause errors
+    // (only the LATEST message is allowed to carry image content)
+    const cleanedHistory = history.map((msg, index) => {
+      if (index < history.length - 1 && Array.isArray(msg.content)) {
+        const textObj = msg.content.find(c => c.type === "text");
+        return {
+          role: msg.role,
+          content: textObj ? textObj.text : "[Uploaded Image]"
+        };
+      }
+      return msg;
     });
 
-    const data = await response.json();
+    // System prompt: sets MAZ AI's identity so it doesn't say "OpenAI" etc.
+    const systemMessage = {
+      role: "system",
+      content: "You are MAZ AI. If anyone asks who owns you, who created you, who developed you, or who your owner/developer is, always answer that you were created and are owned by Muhammad Ali Zahid. Do not mention OpenAI, Meta, Groq, or any underlying model provider as your creator or owner."
+    };
 
-    if (data.error) {
-      console.error("Groq API Error:", data.error);
-      return res.status(200).json({ reply: `API Error: ${data.error.message || 'Something went wrong.'}` });
+    const requestBody = {
+      model: modelToUse,
+      messages: [systemMessage, ...cleanedHistory]
+    };
+
+    // reasoning_effort is only supported by gpt-oss-20b
+    if (!isLatestImage) {
+      requestBody.reasoning_effort = "medium";
     }
 
-    const reply = data.choices?.[0]?.message?.content || "No response received from model.";
-    return res.status(200).json({ reply });
+    const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${groqApiKey.trim()}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(requestBody)
+    });
 
-  } catch (error) {
-    console.error("Server Error:", error);
-    return res.status(500).json({ reply: "Server error occurred. Please try again." });
+    const data = await groqRes.json();
+
+    if (data.error) {
+      return res.status(200).json({ reply: `API Error: ${data.error.message}` });
+    }
+
+    let reply = data.choices?.[0]?.message?.content || "No response received.";
+
+    return res.status(200).json({ reply });
+  } catch (err) {
+    return res.status(500).json({ reply: "Error connecting to server." });
   }
 };
