@@ -50,14 +50,14 @@ module.exports = async function handler(req, res) {
       } catch (err) {}
     }
 
-    // Call Groq API
+    // Call Groq API with Best Model
     let aiResponseText = "Groq API key is missing on Vercel.";
     if (groqApiKey) {
       try {
         const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
           method: "POST",
           headers: {
-            "Authorization": `Bearer ${groqApiKey}`,
+            "Authorization": `Bearer ${groqApiKey.trim()}`,
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
@@ -69,7 +69,7 @@ module.exports = async function handler(req, res) {
         const groqData = await groqRes.json();
         
         if (groqData.error) {
-          aiResponseText = "Groq Error: " + (groqData.error.message || "Invalid response");
+          aiResponseText = "Groq Error: " + (groqData.error.message || "Invalid API key");
         } else {
           aiResponseText = groqData.choices?.[0]?.message?.content || "No response received.";
         }
