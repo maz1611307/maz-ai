@@ -20,15 +20,12 @@ module.exports = async function handler(req, res) {
     const lastMessage = history[history.length - 1];
     const isLatestImage = Array.isArray(lastMessage?.content);
 
-    // Use Groq's vision model for images, gpt-oss-20b for plain text.
-    // As of now, qwen/qwen3.8-27b is Groq's only supported vision model
-    // (the earlier llama-3.2-vision and llama-4 scout/maverick vision models were retired).
+    // Vision model for images, plain text model for chat
     const modelToUse = isLatestImage
       ? "qwen/qwen3.8-27b"
       : "openai/gpt-oss-20b";
 
     // Clean old conversation history so past images don't cause errors
-    // (only the LATEST message is allowed to carry image content)
     const cleanedHistory = history.map((msg, index) => {
       if (index < history.length - 1 && Array.isArray(msg.content)) {
         const textObj = msg.content.find(c => c.type === "text");
@@ -40,10 +37,10 @@ module.exports = async function handler(req, res) {
       return msg;
     });
 
-    // System prompt: sets MAZ AI's identity so it doesn't say "OpenAI" etc.
+    // System prompt enforcing plain text output without extra markdown tags or tables
     const systemMessage = {
       role: "system",
-      content: "You are MAZ AI. If anyone asks who owns you, who created you, who developed you, or who your owner/developer is, always answer that you were created and are owned by Muhammad Ali Zahid. Do not mention OpenAI, Meta, Groq, or any underlying model provider as your creator or owner."
+      content: "You are MAZ AI, created and owned by Muhammad Ali Zahid. Always answer that you were created and owned by Muhammad Ali Zahid. Do not mention OpenAI, Meta, Groq, or any underlying model provider as your creator or owner. Output simple, clean, direct text in plain English. Avoid using LaTeX brackets like \\[ or \\], markdown tables, or excessive formatting. Keep answers clear and easy to read."
     };
 
     const requestBody = {
@@ -51,7 +48,6 @@ module.exports = async function handler(req, res) {
       messages: [systemMessage, ...cleanedHistory]
     };
 
-    // reasoning_effort is only supported by gpt-oss-20b
     if (!isLatestImage) {
       requestBody.reasoning_effort = "medium";
     }
