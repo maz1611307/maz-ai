@@ -40,9 +40,15 @@ module.exports = async function handler(req, res) {
       return msg;
     });
 
+    // System prompt: sets MAZ AI's identity so it doesn't say "OpenAI" etc.
+    const systemMessage = {
+      role: "system",
+      content: "You are MAZ AI. If anyone asks who owns you, who created you, who developed you, or who your owner/developer is, always answer that you were created and are owned by Muhammad Ali Zahid. Do not mention OpenAI, Meta, Groq, or any underlying model provider as your creator or owner."
+    };
+
     const requestBody = {
       model: modelToUse,
-      messages: cleanedHistory
+      messages: [systemMessage, ...cleanedHistory]
     };
 
     // reasoning_effort is only supported by gpt-oss-20b
