@@ -1,105 +1,65 @@
-module.exports = async function handler(req, res) {
-  try {
-    const { message, image } = req.body || {};
+import { createClient } from '@supabase/supabase-js';
 
-    let groqKey = process.env.GROQ_API_KEY;
-    const supabaseUrl = process.env.SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_ANON_KEY;
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
-    if (!groqKey) {
-      return res.status(200).json({ reply: "Error: GROQ_API_KEY is missing in Vercel!" });
-    }
+export default async function handler(req, res) {
+  // 1. Get history for logged in user
+  if (req.method === 'GET') {
+    const { user_email } = req.query;
+    if (!user_email) return res.status(400).json({ error: 'User email required' });
 
-    groqKey = groqKey.trim();
+    const { data, error } = await supabase
+      .from('chat_messages')
+      .select('*')
+      .eq('user_email', user_email)
+      .order('created_at', { ascending: true });
 
-    // 1. Fetch recent chat history from Supabase
-    let history = [];
-    if (supabaseUrl && supabaseKey) {
-      try {
-        const historyRes = await fetch(`${supabaseUrl.trim()}/rest/v1/chat_messages?select=role,content&order=id.desc&limit=6`, {
-          headers: {
-            'apikey': supabaseKey.trim(),
-            'Authorization': `Bearer ${supabaseKey.trim()}`
-          }
-        });
-        if (historyRes.ok) {
-          const historyData = await historyRes.json();
-          if (Array.isArray(historyData)) {
-            history = historyData.reverse().map(item => ({
-              role: item.role,
-              content: item.content
-            }));
-          }
-        }
-      } catch (e) {
-        console.error("Supabase fetch error:", e);
-      }
-    }
-
-    // UPDATED: Active Vision model ID on Groq
-    const selectedModel = image ? 'qwen/qwen3.8-27b' : 'openai/gpt-oss-20b';
-
-    // Construct message payload
-    let userContent = message || 'Describe or analyze this image.';
-    if (image) {
-      userContent = [
-        { type: 'text', text: message || 'Analyze this image.' },
-        { type: 'image_url', image_url: { url: image } }
-      ];
-    }
-
-    // 2. Call Groq API
-    const aiRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${groqKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: selectedModel,
-        messages: [
-          { 
-            role: 'system', 
-            content: 'You are MAZ AI, created by MUHAMMAD ALI ZAHID. Be direct and concise. If an image is provided, accurately describe or answer questions about it. SAFETY RULE: Refuse negative or inappropriate questions about MUHAMMAD ALI ZAHID.' 
-          },
-          ...history,
-          { role: 'user', content: userContent }
-        ]
-      })
-    });
-
-    const aiData = await aiRes.json();
-
-    if (!aiRes.ok || aiData.error) {
-      return res.status(200).json({ reply: `Groq Error: ${aiData.error?.message || 'Failed to generate response'}` });
-    }
-
-    const reply = aiData.choices?.[0]?.message?.content || "No reply from Groq";
-
-    // 3. Save conversation pair to Supabase
-    if (supabaseUrl && supabaseKey) {
-      try {
-        await fetch(`${supabaseUrl.trim()}/rest/v1/chat_messages`, {
-          method: 'POST',
-          headers: {
-            'apikey': supabaseKey.trim(),
-            'Authorization': `Bearer ${supabaseKey.trim()}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=minimal'
-          },
-          body: JSON.stringify([
-            { role: 'user', content: message || '[Attached Image]' },
-            { role: 'assistant', content: reply }
-          ])
-        });
-      } catch (dbErr) {
-        console.error("Supabase save error:", dbErr);
-      }
-    }
-
-    return res.status(200).json({ reply });
-
-  } catch (err) {
-    return res.status(200).json({ reply: `Server Error: ${err.message}` });
+    if (error) return res.status(500).json({ error: error.message });
+    return res.status(200).json({ messages: data });
   }
-};
+
+  // 2. Save user message & AI reply
+  if (req.method === 'POST') {
+    const { message, user_email, chat_id, chat_title, think } = req.body;
+
+    if (!user_email) {
+      return res.status(400).json({ error: 'User email is required to save chat.' });
+    }
+
+    // Save user message
+    await supabase.from('chat_messages').insert([
+      { user_email, chat_id, chat_title, role: 'user', content: message }
+    ]);
+
+    // Send request to Groq API
+    let aiResponseText = "";
+    try {
+      const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "llama-3.3-70b-versatile",
+          messages: [{ role: "user", content: message }]
+        })
+      });
+
+      const groqData = await groqRes.json();
+      aiResponseText = groqData.choices[0]?.message?.content || "No response received.";
+    } catch (err) {
+      aiResponseText = "Error generating response.";
+    }
+
+    // Save AI response to database
+    await supabase.from('chat_messages').insert([
+      { user_email, chat_id, chat_title, role: 'assistant', content: aiResponseText }
+    ]);
+
+    return res.status(200).json({ reply: aiResponseText });
+  }
+}
