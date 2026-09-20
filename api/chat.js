@@ -50,7 +50,7 @@ module.exports = async function handler(req, res) {
       } catch (err) {}
     }
 
-    // Call Groq API with Best Model
+    // Call Groq API with Mixtral model
     let aiResponseText = "Groq API key is missing on Vercel.";
     if (groqApiKey) {
       try {
@@ -61,7 +61,7 @@ module.exports = async function handler(req, res) {
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            model: "llama-3.3-70b-versatile",
+            model: "mixtral-8x7b-32768",
             messages: [{ role: "user", content: message }]
           })
         });
@@ -69,7 +69,7 @@ module.exports = async function handler(req, res) {
         const groqData = await groqRes.json();
         
         if (groqData.error) {
-          aiResponseText = "Groq Error: " + (groqData.error.message || "Invalid API key");
+          aiResponseText = "Groq Error: " + (groqData.error.message || "Invalid response");
         } else {
           aiResponseText = groqData.choices?.[0]?.message?.content || "No response received.";
         }
