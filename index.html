@@ -72,14 +72,22 @@
     .message.user { align-self: flex-end; background-color: #2a1b4e; color: #f3e8ff; border: 1px solid #581c87; padding: 10px 18px; border-radius: 22px; max-width: 80%; font-size: 15px; }
     .message.assistant { align-self: flex-start; color: #e2e8f0; padding: 4px 0; width: 100%; font-size: 15px; line-height: 1.6; }
 
+    .chat-img { max-width: 250px; max-height: 250px; border-radius: 12px; display: block; margin-bottom: 8px; border: 1px solid #7c3aed; }
+
     footer { padding: 12px 16px 20px 16px; max-width: 850px; width: 100%; margin: 0 auto; }
     .input-card { display: flex; flex-direction: column; background-color: #1a1625; border: 1px solid #4c1d95; border-radius: 24px; padding: 10px 14px; gap: 8px; }
+    
+    /* Image Preview Container */
+    #image-preview-container { display: none; position: relative; width: fit-content; margin-bottom: 4px; }
+    #image-preview { max-width: 90px; max-height: 90px; border-radius: 10px; border: 1px solid #7c3aed; object-fit: cover; }
+    #remove-image-btn { position: absolute; top: -6px; right: -6px; background: #ef4444; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
     .input-row { display: flex; align-items: center; gap: 10px; }
     input[type="text"] { flex: 1; background: transparent; border: none; outline: none; color: #f3e8ff; font-size: 15px; }
 
     .actions-row { display: flex; align-items: center; justify-content: space-between; }
     .actions-left { display: flex; align-items: center; gap: 8px; }
-    .add-file-btn { background: transparent; border: none; color: #c084fc; font-size: 24px; cursor: pointer; }
+    .add-file-btn { background: transparent; border: none; color: #c084fc; font-size: 24px; cursor: pointer; line-height: 1; display: flex; align-items: center; justify-content: center; }
     .think-btn { display: flex; align-items: center; gap: 6px; background-color: #271f38; border: 1px solid #4c1d95; color: #d8b4fe; padding: 6px 12px; border-radius: 20px; font-size: 13px; cursor: pointer; }
     .think-btn.active { background-color: #7c3aed; color: white; }
     .send-arrow-btn { background-color: #8b5cf6; color: white; border: none; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
@@ -133,12 +141,21 @@
 
       <footer>
         <div class="input-card">
+          <!-- Image Preview Area -->
+          <div id="image-preview-container">
+            <img id="image-preview" src="" alt="Selected Preview" />
+            <button id="remove-image-btn" onclick="removeSelectedImage()">✕</button>
+          </div>
+
           <div class="input-row">
             <input type="text" id="user-input" placeholder="Ask MAZ AI..." onkeydown="if(event.key==='Enter') sendMessage()" />
           </div>
           <div class="actions-row">
             <div class="actions-left">
-              <button class="add-file-btn" title="Add file">+</button>
+              <!-- Plus button triggers hidden file input -->
+              <button class="add-file-btn" title="Add file" onclick="document.getElementById('file-input').click()">+</button>
+              <input type="file" id="file-input" accept="image/*" style="display: none;" onchange="handleImageSelect(event)" />
+
               <button class="think-btn" id="think-toggle" onclick="toggleThink()">
                 🧠 <span>Think</span>
               </button>
@@ -155,6 +172,7 @@
     let chats = {}; 
     let activeChatId = null;
     let isThinkActive = false;
+    let selectedImageBase64 = null;
 
     // Check if user is already logged in
     if (currentUserEmail) {
@@ -184,6 +202,28 @@
       document.getElementById('think-toggle').classList.toggle('active', isThinkActive);
     }
 
+    // Handle Image Selection
+    function handleImageSelect(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          selectedImageBase64 = e.target.result;
+          document.getElementById('image-preview').src = selectedImageBase64;
+          document.getElementById('image-preview-container').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    // Remove Selected Image
+    function removeSelectedImage() {
+      selectedImageBase64 = null;
+      document.getElementById('file-input').value = '';
+      document.getElementById('image-preview').src = '';
+      document.getElementById('image-preview-container').style.display = 'none';
+    }
+
     async function loadUserChats() {
       if (!currentUserEmail) return;
 
@@ -198,7 +238,7 @@
             if (!chats[chatId]) {
               chats[chatId] = { title: msg.chat_title || 'Chat', messages: [] };
             }
-            chats[chatId].messages.push({ role: msg.role, text: msg.content });
+            chats[chatId].messages.push({ role: msg.role, text: msg.content, image: msg.image || null });
           });
         }
 
@@ -242,7 +282,21 @@
       chats[activeChatId].messages.forEach(msg => {
         const div = document.createElement('div');
         div.className = `message ${msg.role}`;
-        div.textContent = msg.text;
+        
+        // Render image if present
+        if (msg.image) {
+          const img = document.createElement('img');
+          img.src = msg.image;
+          img.className = 'chat-img';
+          div.appendChild(img);
+        }
+
+        if (msg.text) {
+          const textSpan = document.createElement('span');
+          textSpan.textContent = msg.text;
+          div.appendChild(textSpan);
+        }
+
         container.appendChild(div);
       });
       container.scrollTop = container.scrollHeight;
@@ -251,16 +305,23 @@
     async function sendMessage() {
       const input = document.getElementById('user-input');
       const text = input.value.trim();
-      if (!text || !currentUserEmail) return;
+      const imageToSend = selectedImageBase64;
+
+      if ((!text && !imageToSend) || !currentUserEmail) return;
 
       if (!activeChatId) createNewChat();
 
       if (chats[activeChatId].messages.length === 0) {
-        chats[activeChatId].title = text.slice(0, 25) + '...';
+        chats[activeChatId].title = text ? (text.slice(0, 25) + '...') : 'Image Message';
       }
 
-      chats[activeChatId].messages.push({ role: 'user', text });
+      // Add user message to UI
+      chats[activeChatId].messages.push({ role: 'user', text, image: imageToSend });
+      
+      // Clear input state
       input.value = '';
+      removeSelectedImage();
+      
       renderSidebar();
       renderMessages();
 
@@ -270,6 +331,7 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             message: text,
+            image: imageToSend,
             user_email: currentUserEmail,
             chat_id: activeChatId,
             chat_title: chats[activeChatId].title,
