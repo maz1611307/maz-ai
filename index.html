@@ -43,17 +43,8 @@
     }
     .new-chat-btn:hover { background-color: #6d28d9; }
 
-    .history-title { font-size: 11px; color: #94a3b8; font-weight: 700; letter-spacing: 0.5px; }
-    .history-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
-
-    .history-item {
-      padding: 10px 12px; border-radius: 8px; background-color: #1a1625; color: #cbd5e1;
-      cursor: pointer; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .history-item:hover, .history-item.active { background-color: #271f38; color: #f3e8ff; border: 1px solid #581c87; }
-
     .user-profile {
-      padding-top: 10px; border-top: 1px solid #2e2342; display: flex; align-items: center;
+      margin-top: auto; padding-top: 10px; border-top: 1px solid #2e2342; display: flex; align-items: center;
       justify-content: space-between; font-size: 13px; color: #cbd5e1;
     }
     .logout-btn { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 12px; }
@@ -77,7 +68,7 @@
     footer { padding: 12px 16px 20px 16px; max-width: 850px; width: 100%; margin: 0 auto; }
     .input-card { display: flex; flex-direction: column; background-color: #1a1625; border: 1px solid #4c1d95; border-radius: 24px; padding: 10px 14px; gap: 8px; }
     
-    /* Image Preview Container */
+    /* Image Preview Area */
     #image-preview-container { display: none; position: relative; width: fit-content; margin-bottom: 4px; }
     #image-preview { max-width: 90px; max-height: 90px; border-radius: 10px; border: 1px solid #7c3aed; object-fit: cover; }
     #remove-image-btn { position: absolute; top: -6px; right: -6px; background: #ef4444; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
@@ -99,9 +90,8 @@
   <div id="login-overlay">
     <div class="login-card">
       <h2 style="color: #c084fc;">Welcome to MAZ AI</h2>
-      <p style="color: #94a3b8; font-size: 14px;">Sign in with Google to access your private chats</p>
+      <p style="color: #94a3b8; font-size: 14px;">Sign in with Google to use MAZ AI</p>
       
-      <!-- GOOGLE LOGIN BUTTON WITH YOUR CLIENT ID -->
       <div id="g_id_onload"
            data-client_id="38665812589-0h1ouegqmkh9ug7fehlj5seudglhf5rs.apps.googleusercontent.com"
            data-callback="handleCredentialResponse">
@@ -113,12 +103,9 @@
   <!-- Main App Layout -->
   <div class="app-container">
     <aside class="sidebar">
-      <button class="new-chat-btn" onclick="createNewChat()">
+      <button class="new-chat-btn" onclick="clearChat()">
         <span>+</span> New Chat
       </button>
-      
-      <div class="history-title">YOUR RECENT CHATS</div>
-      <div class="history-list" id="history-list"></div>
 
       <div class="user-profile">
         <span id="user-display-email">User</span>
@@ -152,7 +139,6 @@
           </div>
           <div class="actions-row">
             <div class="actions-left">
-              <!-- Plus button triggers hidden file input -->
               <button class="add-file-btn" title="Add file" onclick="document.getElementById('file-input').click()">+</button>
               <input type="file" id="file-input" accept="image/*" style="display: none;" onchange="handleImageSelect(event)" />
 
@@ -169,19 +155,17 @@
 
   <script>
     let currentUserEmail = localStorage.getItem('maz_user_email') || null;
-    let chats = {}; 
-    let activeChatId = null;
     let isThinkActive = false;
     let selectedImageBase64 = null;
+    
+    // Memory array to keep track of current conversation
+    let chatHistory = [];
 
-    // Check if user is already logged in
     if (currentUserEmail) {
       document.getElementById('login-overlay').style.display = 'none';
       document.getElementById('user-display-email').textContent = currentUserEmail;
-      loadUserChats();
     }
 
-    // Google Auth Callback
     function handleCredentialResponse(response) {
       const responsePayload = jwt_decode(response.credential);
       currentUserEmail = responsePayload.email;
@@ -189,7 +173,6 @@
       
       document.getElementById('login-overlay').style.display = 'none';
       document.getElementById('user-display-email').textContent = currentUserEmail;
-      loadUserChats();
     }
 
     function logout() {
@@ -202,7 +185,11 @@
       document.getElementById('think-toggle').classList.toggle('active', isThinkActive);
     }
 
-    // Handle Image Selection
+    function clearChat() {
+      document.getElementById('chat-container').innerHTML = '';
+      chatHistory = []; // Reset memory for a fresh conversation
+    }
+
     function handleImageSelect(event) {
       const file = event.target.files[0];
       if (file) {
@@ -216,7 +203,6 @@
       }
     }
 
-    // Remove Selected Image
     function removeSelectedImage() {
       selectedImageBase64 = null;
       document.getElementById('file-input').value = '';
@@ -224,81 +210,25 @@
       document.getElementById('image-preview-container').style.display = 'none';
     }
 
-    async function loadUserChats() {
-      if (!currentUserEmail) return;
-
-      try {
-        const res = await fetch(`/api/chat?user_email=${encodeURIComponent(currentUserEmail)}`);
-        const data = await res.json();
-        
-        chats = {};
-        if (data.messages) {
-          data.messages.forEach(msg => {
-            const chatId = msg.chat_id || 'default_chat';
-            if (!chats[chatId]) {
-              chats[chatId] = { title: msg.chat_title || 'Chat', messages: [] };
-            }
-            chats[chatId].messages.push({ role: msg.role, text: msg.content, image: msg.image || null });
-          });
-        }
-
-        renderSidebar();
-        const chatKeys = Object.keys(chats);
-        if (chatKeys.length > 0) {
-          activeChatId = chatKeys[chatKeys.length - 1];
-          renderMessages();
-        } else {
-          createNewChat();
-        }
-      } catch (err) {
-        console.error("Failed to load user chats", err);
-      }
-    }
-
-    function createNewChat() {
-      activeChatId = 'chat_' + Date.now();
-      chats[activeChatId] = { title: 'New Chat', messages: [] };
-      renderSidebar();
-      renderMessages();
-    }
-
-    function renderSidebar() {
-      const list = document.getElementById('history-list');
-      list.innerHTML = '';
-      Object.keys(chats).reverse().forEach(id => {
-        const item = document.createElement('div');
-        item.className = `history-item ${id === activeChatId ? 'active' : ''}`;
-        item.textContent = chats[id].title || 'Untitled Chat';
-        item.onclick = () => { activeChatId = id; renderSidebar(); renderMessages(); };
-        list.appendChild(item);
-      });
-    }
-
-    function renderMessages() {
+    function addMessageToUI(role, text, image) {
       const container = document.getElementById('chat-container');
-      container.innerHTML = '';
-      if (!activeChatId || !chats[activeChatId]) return;
+      const div = document.createElement('div');
+      div.className = `message ${role}`;
+      
+      if (image) {
+        const img = document.createElement('img');
+        img.src = image;
+        img.className = 'chat-img';
+        div.appendChild(img);
+      }
 
-      chats[activeChatId].messages.forEach(msg => {
-        const div = document.createElement('div');
-        div.className = `message ${msg.role}`;
-        
-        // Render image if present
-        if (msg.image) {
-          const img = document.createElement('img');
-          img.src = msg.image;
-          img.className = 'chat-img';
-          div.appendChild(img);
-        }
+      if (text) {
+        const textSpan = document.createElement('span');
+        textSpan.textContent = text;
+        div.appendChild(textSpan);
+      }
 
-        if (msg.text) {
-          const textSpan = document.createElement('span');
-          textSpan.textContent = msg.text;
-          div.appendChild(textSpan);
-        }
-
-        container.appendChild(div);
-      });
+      container.appendChild(div);
       container.scrollTop = container.scrollHeight;
     }
 
@@ -309,42 +239,49 @@
 
       if ((!text && !imageToSend) || !currentUserEmail) return;
 
-      if (!activeChatId) createNewChat();
+      // Render user input in UI
+      addMessageToUI('user', text, imageToSend);
 
-      if (chats[activeChatId].messages.length === 0) {
-        chats[activeChatId].title = text ? (text.slice(0, 25) + '...') : 'Image Message';
+      // Build message payload for memory
+      let userMessageObj = { role: "user" };
+      if (imageToSend) {
+        userMessageObj.content = [
+          { type: "text", text: text || "Describe this image." },
+          { type: "image_url", image_url: { url: imageToSend } }
+        ];
+      } else {
+        userMessageObj.content = text;
       }
 
-      // Add user message to UI
-      chats[activeChatId].messages.push({ role: 'user', text, image: imageToSend });
-      
-      // Clear input state
+      // Add user message to conversation memory
+      chatHistory.push(userMessageObj);
+
       input.value = '';
       removeSelectedImage();
-      
-      renderSidebar();
-      renderMessages();
 
       try {
         const res = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            message: text,
-            image: imageToSend,
+            history: chatHistory, // Sending full memory array
             user_email: currentUserEmail,
-            chat_id: activeChatId,
-            chat_title: chats[activeChatId].title,
             think: isThinkActive
           })
         });
-        const data = await res.json();
-        chats[activeChatId].messages.push({ role: 'assistant', text: data.reply || "No response." });
-      } catch (err) {
-        chats[activeChatId].messages.push({ role: 'assistant', text: "Error connecting to server." });
-      }
 
-      renderMessages();
+        const data = await res.json();
+        const replyText = data.reply || "No response.";
+
+        // Render assistant reply
+        addMessageToUI('assistant', replyText);
+
+        // Add assistant response to conversation memory
+        chatHistory.push({ role: "assistant", content: replyText });
+
+      } catch (err) {
+        addMessageToUI('assistant', "Error connecting to server.");
+      }
     }
   </script>
 </body>
