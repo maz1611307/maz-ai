@@ -50,7 +50,7 @@ module.exports = async function handler(req, res) {
       } catch (err) {}
     }
 
-    // Call Groq API with Mixtral model
+    // Call Groq API
     let aiResponseText = "Groq API key is missing on Vercel.";
     if (groqApiKey) {
       try {
@@ -62,14 +62,20 @@ module.exports = async function handler(req, res) {
           },
           body: JSON.stringify({
             model: "openai/gpt-oss-20b",
-            messages: [{ role: "user", content: message }]
+            messages: [
+              { 
+                role: "system", 
+                content: "You are a helpful assistant. Provide short, direct, and to the point answers. Do NOT use markdown symbols like **, ###, or LaTeX math symbols. Speak in simple plain text only." 
+              },
+              { role: "user", content: message }
+            ]
           })
         });
 
         const groqData = await groqRes.json();
         
         if (groqData.error) {
-          aiResponseText = "Groq Error: " + (groqData.error.message || "Invalid response");
+          aiResponseText = "Groq Error: " + (groqData.error.message || "Invalid API call");
         } else {
           aiResponseText = groqData.choices?.[0]?.message?.content || "No response received.";
         }
