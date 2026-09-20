@@ -6,15 +6,15 @@
   <title>MAZ AI</title>
 
   <!-- Round Purple M Tab Icon -->
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%23120924' stroke='%238b5cf6' stroke-width='4'/><path d='M 22 68 C 22 68 20 32 30 26 C 38 20 42 58 48 58 C 54 58 56 28 66 26 C 74 24 76 68 82 66' stroke='%23c084fc' stroke-width='8' stroke-linecap='round' stroke-linejoin='round' fill='none'/><path d='M 22 68 C 22 68 20 32 30 26 C 38 20 42 58 48 58 C 54 58 56 28 66 26 C 74 24 76 68 82 66' stroke='%23f3e8ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' fill='none'/></svg>" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%23120924' stroke='%238b5cf6' stroke-width='4'/><path d='M 22 68 C 22 68 20 32 30 26 C 38 20 42 58 48 58 C 54 58 56 28 66 26 C 74 24 76 68 82 66' stroke='%23c084fc' stroke-width='8' stroke-linecap='round' stroke-linejoin='round' fill='none'/><path d='M 22 68 C 22 68 20 32 30 26 C 38 20 42 58 48 58 C 54 58 56 28 66 26 C 74 24 76 68 82 66' stroke='%23f3e8ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' fill='none'/></svg>" />
 
   <!-- Google Identity Services & JWT Decoder -->
-  <script src="[https://accounts.google.com/gsi/client](https://accounts.google.com/gsi/client)" async defer></script>
-  <script src="[https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js](https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js)"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
 
-  <!-- Highlight.js CSS & JS for Colorful Code Highlighting -->
-  <link rel="stylesheet" href="[https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css](https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css)">
-  <script src="[https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js](https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js)"></script>
+  <!-- Highlight.js CSS & JS for Code Highlighting -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
 
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -72,7 +72,7 @@
     .message.assistant li { margin-bottom: 4px; }
     .message.assistant code:not(.code-table code) { background-color: #271f38; color: #d8b4fe; padding: 2px 6px; border-radius: 6px; font-size: 13px; }
 
-    /* Code Block Styling like Pic 2 */
+    /* Code Block Styling */
     .code-block-wrapper {
       background-color: #1e1e24;
       border: 1px solid #322d48;
@@ -204,7 +204,7 @@
   <div class="main-workspace">
     <header>
       <div class="brand">
-        <svg width="28" height="28" viewBox="0 0 100 100" fill="none" xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)">
+        <svg width="28" height="28" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
           <circle cx="50" cy="50" r="48" fill="#120924" stroke="#8b5cf6" stroke-width="4"/>
           <path d="M 22 68 C 22 68 20 32 30 26 C 38 20 42 58 48 58 C 54 58 56 28 66 26 C 74 24 76 68 82 66" stroke="#c084fc" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
@@ -270,7 +270,7 @@
       const container = document.getElementById('chat-container');
       container.innerHTML = `
         <div class="welcome-placeholder" id="welcome-placeholder">
-          <svg width="64" height="64" viewBox="0 0 100 100" fill="none" xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)">
+          <svg width="64" height="64" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
             <circle cx="50" cy="50" r="48" fill="#120924" stroke="#8b5cf6" stroke-width="4"/>
             <path d="M 22 68 C 22 68 20 32 30 26 C 38 20 42 58 48 58 C 54 58 56 28 66 26 C 74 24 76 68 82 66" stroke="#c084fc" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
@@ -396,14 +396,14 @@
     function renderMarkdown(rawText) {
       const blocks = [];
       
-      // Step 1: Extract code blocks before HTML escaping
+      // Extract code blocks first
       let placeholderText = rawText.replace(/```([a-zA-Z0-9_+-]*)\n([\s\S]*?)```/g, (match, lang, code) => {
         const index = blocks.length;
         blocks.push({ lang: lang || 'code', code: code.trim() });
         return `___CODE_BLOCK_${index}___`;
       });
 
-      // Step 2: Escape normal HTML text
+      // Escape normal HTML
       let html = placeholderText
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
@@ -413,7 +413,7 @@
       html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
       html = html.replace(/`([^`]+)`/g, "<code>$1</code>");
 
-      // Format lines
+      // Format lists and lines
       const lines = html.split("\n");
       let formattedHtml = "";
       let inList = false;
@@ -439,7 +439,7 @@
       }
       if (inList) formattedHtml += "</ul>";
 
-      // Step 3: Put styled code blocks back
+      // Re-insert highlighted code blocks
       blocks.forEach((item, index) => {
         let highlightedCode = item.code;
         if (window.hljs) {
