@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+const { createClient } = require('@supabase/supabase-js');
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -6,7 +6,7 @@ const groqApiKey = process.env.GROQ_API_KEY;
 
 const supabase = (supabaseUrl && supabaseKey) ? createClient(supabaseUrl, supabaseKey) : null;
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   // 1. GET User Chat History
   if (req.method === 'GET') {
     const { user_email } = req.query;
@@ -72,4 +72,4 @@ export default async function handler(req, res) {
   }
 
   return res.status(405).json({ error: 'Method not allowed' });
-}
+};
