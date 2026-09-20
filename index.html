@@ -13,6 +13,10 @@
   <!-- JWT Decoder Library -->
   <script src="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
 
+  <!-- Highlight.js for Colorful Code Syntax Highlighting -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
 
@@ -69,8 +73,75 @@
     .message.assistant strong, .message.assistant b { color: #c084fc; font-weight: 600; }
     .message.assistant ul { margin: 6px 0 6px 20px; padding: 0; }
     .message.assistant li { margin-bottom: 4px; }
-    .message.assistant code { background-color: #271f38; color: #d8b4fe; padding: 2px 6px; border-radius: 6px; font-size: 13px; }
+    .message.assistant code:not(.code-table code) { background-color: #271f38; color: #d8b4fe; padding: 2px 6px; border-radius: 6px; font-size: 13px; }
     .message.assistant div { margin-bottom: 2px; }
+
+    /* Custom Code Block Styling matching Pic 2 */
+    .code-block-wrapper {
+      background-color: #1e1e24;
+      border: 1px solid #322d48;
+      border-radius: 10px;
+      margin: 12px 0;
+      overflow: hidden;
+      font-family: 'Consolas', 'Courier New', monospace;
+    }
+
+    .code-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #18181c;
+      padding: 8px 14px;
+      border-bottom: 1px solid #2e2840;
+      font-size: 13px;
+      color: #94a3b8;
+    }
+
+    .code-copy-btn {
+      background-color: #2e2840;
+      color: #e2e8f0;
+      border: 1px solid #4c3b6e;
+      padding: 4px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: background 0.2s;
+    }
+    .code-copy-btn:hover { background-color: #4c1d95; }
+
+    .code-scroll-area {
+      overflow-x: auto;
+      padding: 10px 0;
+    }
+
+    .code-table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .code-table td {
+      padding: 0;
+      vertical-align: top;
+    }
+
+    .line-numbers {
+      user-select: none;
+      text-align: right;
+      color: #4a5568;
+      padding-right: 14px;
+      padding-left: 12px;
+      border-right: 1px solid #2d2d38;
+      width: 40px;
+    }
+
+    .code-content {
+      padding-left: 14px;
+      padding-right: 14px;
+      white-space: pre;
+      color: #abb2bf;
+    }
 
     /* Speaker Button for Assistant Output */
     .speak-btn {
@@ -324,8 +395,58 @@
       document.getElementById('image-preview-container').style.display = 'none';
     }
 
+    function copyCodeToClipboard(button, textToCopy) {
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        button.innerText = 'Copied!';
+        setTimeout(() => { button.innerText = 'Copy'; }, 2000);
+      });
+    }
+
     function renderMarkdown(text) {
       let escaped = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+      // Extract and format ``` language code blocks
+      const codeBlockRegex = /```([a-zA-Z0-9_+-]*)\n([\s\S]*?)```/g;
+      
+      escaped = escaped.replace(codeBlockRegex, (match, lang, code) => {
+        const cleanCode = code.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").trim();
+        const displayLang = lang || 'code';
+
+        // Apply syntax highlighting
+        let highlightedCode = cleanCode;
+        if (window.hljs) {
+          if (lang && hljs.getLanguage(lang)) {
+            highlightedCode = hljs.highlight(cleanCode, { language: lang }).value;
+          } else {
+            highlightedCode = hljs.highlightAuto(cleanCode).value;
+          }
+        }
+
+        const lines = highlightedCode.split('\n');
+        const lineNumsHtml = lines.map((_, i) => `<div>${i + 1}</div>`).join('');
+        const codeLinesHtml = lines.map(line => `<div>${line || ' '}</div>`).join('');
+
+        const safeCodeForAttr = encodeURIComponent(cleanCode);
+
+        return `
+          <div class="code-block-wrapper">
+            <div class="code-header">
+              <span>${displayLang}</span>
+              <button class="code-copy-btn" onclick="copyCodeToClipboard(this, decodeURIComponent('${safeCodeForAttr}'))">Copy</button>
+            </div>
+            <div class="code-scroll-area">
+              <table class="code-table">
+                <tr>
+                  <td class="line-numbers">${lineNumsHtml}</td>
+                  <td class="code-content">${codeLinesHtml}</td>
+                </tr>
+              </table>
+            </div>
+          </div>
+        `;
+      });
+
+      // Format inline bold and code
       escaped = escaped.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
       escaped = escaped.replace(/`([^`]+)`/g, "<code>$1</code>");
 
@@ -335,6 +456,13 @@
 
       for (let line of lines) {
         const trimmed = line.trim();
+        
+        // Skip modifying code block containers
+        if (trimmed.startsWith('<div class="code-block-wrapper">') || trimmed.includes('code-table')) {
+          html += line;
+          continue;
+        }
+
         const listMatch = trimmed.match(/^-\s+(.*)$/);
         if (listMatch) {
           if (!inList) { html += "<ul>"; inList = true; }
