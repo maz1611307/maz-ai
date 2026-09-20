@@ -6,16 +6,15 @@
   <title>MAZ AI</title>
 
   <!-- Round Purple M Tab Icon -->
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%23120924' stroke='%238b5cf6' stroke-width='4'/><path d='M 22 68 C 22 68 20 32 30 26 C 38 20 42 58 48 58 C 54 58 56 28 66 26 C 74 24 76 68 82 66' stroke='%23c084fc' stroke-width='8' stroke-linecap='round' stroke-linejoin='round' fill='none'/><path d='M 22 68 C 22 68 20 32 30 26 C 38 20 42 58 48 58 C 54 58 56 28 66 26 C 74 24 76 68 82 66' stroke='%23f3e8ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' fill='none'/></svg>" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%23120924' stroke='%238b5cf6' stroke-width='4'/><path d='M 22 68 C 22 68 20 32 30 26 C 38 20 42 58 48 58 C 54 58 56 28 66 26 C 74 24 76 68 82 66' stroke='%23c084fc' stroke-width='8' stroke-linecap='round' stroke-linejoin='round' fill='none'/><path d='M 22 68 C 22 68 20 32 30 26 C 38 20 42 58 48 58 C 54 58 56 28 66 26 C 74 24 76 68 82 66' stroke='%23f3e8ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' fill='none'/></svg>" />
 
-  <!-- Google Identity Services Library -->
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
-  <!-- JWT Decoder Library -->
-  <script src="https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js"></script>
+  <!-- Google Identity Services & JWT Decoder -->
+  <script src="[https://accounts.google.com/gsi/client](https://accounts.google.com/gsi/client)" async defer></script>
+  <script src="[https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js](https://cdn.jsdelivr.net/npm/jwt-decode@3.1.2/build/jwt-decode.min.js)"></script>
 
-  <!-- Highlight.js for Colorful Code Syntax Highlighting -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+  <!-- Highlight.js CSS & JS for Colorful Code Highlighting -->
+  <link rel="stylesheet" href="[https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css](https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css)">
+  <script src="[https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js](https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js)"></script>
 
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -39,7 +38,6 @@
     header { display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; border-bottom: 1px solid #2e2342; }
     .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 20px; color: #c084fc; }
 
-    /* Top Corner New Chat Button */
     .top-new-chat-btn {
       background-color: #7c3aed; color: white; border: none; width: 40px; height: 40px;
       border-radius: 50%; font-size: 24px; cursor: pointer; display: flex; align-items: center;
@@ -59,7 +57,6 @@
     #chat-container::-webkit-scrollbar-thumb { background: #3b2164; border-radius: 10px; }
     #chat-container::-webkit-scrollbar-thumb:hover { background: #7c3aed; }
 
-    /* Empty state centered brand element */
     .welcome-placeholder {
       margin: auto; display: flex; flex-direction: column; align-items: center;
       justify-content: center; text-align: center; gap: 12px; user-select: none;
@@ -74,9 +71,8 @@
     .message.assistant ul { margin: 6px 0 6px 20px; padding: 0; }
     .message.assistant li { margin-bottom: 4px; }
     .message.assistant code:not(.code-table code) { background-color: #271f38; color: #d8b4fe; padding: 2px 6px; border-radius: 6px; font-size: 13px; }
-    .message.assistant div { margin-bottom: 2px; }
 
-    /* Custom Code Block Styling matching Pic 2 */
+    /* Code Block Styling like Pic 2 */
     .code-block-wrapper {
       background-color: #1e1e24;
       border: 1px solid #322d48;
@@ -143,7 +139,6 @@
       color: #abb2bf;
     }
 
-    /* Speaker Button for Assistant Output */
     .speak-btn {
       background: transparent; border: none; color: #a78bfa; cursor: pointer;
       font-size: 16px; margin-top: 6px; display: inline-flex; align-items: center; gap: 4px;
@@ -155,7 +150,6 @@
     footer { padding: 12px 16px 16px 16px; max-width: 850px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 8px; }
     .input-card { display: flex; flex-direction: column; background-color: #1a1625; border: 1px solid #4c1d95; border-radius: 24px; padding: 10px 14px; gap: 8px; }
 
-    /* Image Preview Area */
     #image-preview-container { display: none; position: relative; width: fit-content; margin-bottom: 4px; }
     #image-preview { max-width: 90px; max-height: 90px; border-radius: 10px; border: 1px solid #7c3aed; object-fit: cover; }
     #remove-image-btn { position: absolute; top: -6px; right: -6px; background: #ef4444; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
@@ -207,11 +201,10 @@
     </div>
   </div>
 
-  <!-- Main App Layout -->
   <div class="main-workspace">
     <header>
       <div class="brand">
-        <svg width="28" height="28" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg width="28" height="28" viewBox="0 0 100 100" fill="none" xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)">
           <circle cx="50" cy="50" r="48" fill="#120924" stroke="#8b5cf6" stroke-width="4"/>
           <path d="M 22 68 C 22 68 20 32 30 26 C 38 20 42 58 48 58 C 54 58 56 28 66 26 C 74 24 76 68 82 66" stroke="#c084fc" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
@@ -237,7 +230,6 @@
             <button class="icon-btn" title="Add file" onclick="document.getElementById('file-input').click()">+</button>
             <input type="file" id="file-input" accept="image/*" style="display: none;" onchange="handleImageSelect(event)" />
 
-            <!-- Mic Button for Voice Input with SVG Icon -->
             <button class="icon-btn" id="mic-btn" title="Speak" onclick="toggleVoiceInput()">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
@@ -278,7 +270,7 @@
       const container = document.getElementById('chat-container');
       container.innerHTML = `
         <div class="welcome-placeholder" id="welcome-placeholder">
-          <svg width="64" height="64" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg width="64" height="64" viewBox="0 0 100 100" fill="none" xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)">
             <circle cx="50" cy="50" r="48" fill="#120924" stroke="#8b5cf6" stroke-width="4"/>
             <path d="M 22 68 C 22 68 20 32 30 26 C 38 20 42 58 48 58 C 54 58 56 28 66 26 C 74 24 76 68 82 66" stroke="#c084fc" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
@@ -307,7 +299,6 @@
       renderEmptyState();
     }
 
-    /* Speech-to-Text Setup */
     function setupSpeechRecognition() {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (SpeechRecognition) {
@@ -353,7 +344,6 @@
       }
     }
 
-    /* Text-to-Speech Function */
     function speakText(text) {
       window.speechSynthesis.cancel();
       const cleanText = text.replace(/[*_`#]/g, '');
@@ -402,36 +392,73 @@
       });
     }
 
-    function renderMarkdown(text) {
-      let escaped = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
-      // Extract and format ``` language code blocks
-      const codeBlockRegex = /```([a-zA-Z0-9_+-]*)\n([\s\S]*?)```/g;
+    // Fixed Markdown & Code Parser
+    function renderMarkdown(rawText) {
+      const blocks = [];
       
-      escaped = escaped.replace(codeBlockRegex, (match, lang, code) => {
-        const cleanCode = code.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").trim();
-        const displayLang = lang || 'code';
+      // Step 1: Extract code blocks before HTML escaping
+      let placeholderText = rawText.replace(/```([a-zA-Z0-9_+-]*)\n([\s\S]*?)```/g, (match, lang, code) => {
+        const index = blocks.length;
+        blocks.push({ lang: lang || 'code', code: code.trim() });
+        return `___CODE_BLOCK_${index}___`;
+      });
 
-        // Apply syntax highlighting
-        let highlightedCode = cleanCode;
+      // Step 2: Escape normal HTML text
+      let html = placeholderText
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+
+      // Format bold and inline code
+      html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+      html = html.replace(/`([^`]+)`/g, "<code>$1</code>");
+
+      // Format lines
+      const lines = html.split("\n");
+      let formattedHtml = "";
+      let inList = false;
+
+      for (let line of lines) {
+        const trimmed = line.trim();
+
+        if (trimmed.startsWith("___CODE_BLOCK_")) {
+          if (inList) { formattedHtml += "</ul>"; inList = false; }
+          formattedHtml += line;
+          continue;
+        }
+
+        const listMatch = trimmed.match(/^-\s+(.*)$/);
+        if (listMatch) {
+          if (!inList) { formattedHtml += "<ul>"; inList = true; }
+          formattedHtml += `<li>${listMatch[1]}</li>`;
+        } else {
+          if (inList) { formattedHtml += "</ul>"; inList = false; }
+          if (trimmed === "") formattedHtml += "<br>";
+          else formattedHtml += `<div>${trimmed}</div>`;
+        }
+      }
+      if (inList) formattedHtml += "</ul>";
+
+      // Step 3: Put styled code blocks back
+      blocks.forEach((item, index) => {
+        let highlightedCode = item.code;
         if (window.hljs) {
-          if (lang && hljs.getLanguage(lang)) {
-            highlightedCode = hljs.highlight(cleanCode, { language: lang }).value;
+          if (item.lang && hljs.getLanguage(item.lang)) {
+            highlightedCode = hljs.highlight(item.code, { language: item.lang }).value;
           } else {
-            highlightedCode = hljs.highlightAuto(cleanCode).value;
+            highlightedCode = hljs.highlightAuto(item.code).value;
           }
         }
 
-        const lines = highlightedCode.split('\n');
-        const lineNumsHtml = lines.map((_, i) => `<div>${i + 1}</div>`).join('');
-        const codeLinesHtml = lines.map(line => `<div>${line || ' '}</div>`).join('');
+        const linesArr = highlightedCode.split('\n');
+        const lineNumsHtml = linesArr.map((_, i) => `<div>${i + 1}</div>`).join('');
+        const codeLinesHtml = linesArr.map(line => `<div>${line || ' '}</div>`).join('');
+        const safeCodeForAttr = encodeURIComponent(item.code);
 
-        const safeCodeForAttr = encodeURIComponent(cleanCode);
-
-        return `
+        const codeBlockHtml = `
           <div class="code-block-wrapper">
             <div class="code-header">
-              <span>${displayLang}</span>
+              <span>${item.lang}</span>
               <button class="code-copy-btn" onclick="copyCodeToClipboard(this, decodeURIComponent('${safeCodeForAttr}'))">Copy</button>
             </div>
             <div class="code-scroll-area">
@@ -444,37 +471,11 @@
             </div>
           </div>
         `;
+
+        formattedHtml = formattedHtml.replace(`___CODE_BLOCK_${index}___`, codeBlockHtml);
       });
 
-      // Format inline bold and code
-      escaped = escaped.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-      escaped = escaped.replace(/`([^`]+)`/g, "<code>$1</code>");
-
-      const lines = escaped.split("\n");
-      let html = "";
-      let inList = false;
-
-      for (let line of lines) {
-        const trimmed = line.trim();
-        
-        // Skip modifying code block containers
-        if (trimmed.startsWith('<div class="code-block-wrapper">') || trimmed.includes('code-table')) {
-          html += line;
-          continue;
-        }
-
-        const listMatch = trimmed.match(/^-\s+(.*)$/);
-        if (listMatch) {
-          if (!inList) { html += "<ul>"; inList = true; }
-          html += `<li>${listMatch[1]}</li>`;
-        } else {
-          if (inList) { html += "</ul>"; inList = false; }
-          if (trimmed === "") html += "<br>";
-          else html += `<div>${trimmed}</div>`;
-        }
-      }
-      if (inList) html += "</ul>";
-      return html;
+      return formattedHtml;
     }
 
     function addMessageToUI(role, text, image) {
