@@ -10,67 +10,37 @@ module.exports = async function handler(req, res) {
   }
 
   const groqApiKey = process.env.GROQ_API_KEY;
-
   if (!groqApiKey) {
     return res.status(200).json({ reply: "Groq API key is missing on Vercel." });
   }
 
+  // Updated system prompt: Only mention creator if explicitly asked
+  const systemMessage = {
+    role: "system",
+    content: "You are MAZ AI, a helpful and smart AI assistant. Answer the user's questions directly without intro greetings. Do NOT state who created or owns you in every message. ONLY state that you were created and owned by Muhammad Ali Zahid if the user specifically asks who created, built, or owns you."
+  };
+
   try {
-    // Check if the latest message includes an image
-    const lastMessage = history[history.length - 1];
-    const isLatestImage = Array.isArray(lastMessage?.content);
+    const formattedMessages = [systemMessage, ...history];
 
-    // Vision model for images, plain text model for chat
-    const modelToUse = isLatestImage
-      ? "qwen/qwen3.8-27b"
-      : "openai/gpt-oss-20b";
-
-    // Clean old conversation history so past images don't cause errors
-    const cleanedHistory = history.map((msg, index) => {
-      if (index < history.length - 1 && Array.isArray(msg.content)) {
-        const textObj = msg.content.find(c => c.type === "text");
-        return {
-          role: msg.role,
-          content: textObj ? textObj.text : "[Uploaded Image]"
-        };
-      }
-      return msg;
-    });
-
-    // System prompt enforcing plain text output without extra markdown tags or tables
-    const systemMessage = {
-      role: "system",
-      content: "You are MAZ AI, created and owned by Muhammad Ali Zahid. Always answer that you were created and owned by Muhammad Ali Zahid. Do not mention OpenAI, Meta, Groq, or any underlying model provider as your creator or owner. Output simple, clean, direct text in plain English. Avoid using LaTeX brackets like \\[ or \\], markdown tables, or excessive formatting. Keep answers clear and easy to read."
-    };
-
-    const requestBody = {
-      model: modelToUse,
-      messages: [systemMessage, ...cleanedHistory]
-    };
-
-    if (!isLatestImage) {
-      requestBody.reasoning_effort = "medium";
-    }
-
-    const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    const response = await fetch("[https://api.groq.com/openai/v1/chat/completions](https://api.groq.com/openai/v1/chat/completions)", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${groqApiKey.trim()}`,
+        "Authorization": `Bearer ${groqApiKey}`,
         "Content-Type": "application/json"
       },
-      body: JSON.stringify(requestBody)
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        messages: formattedMessages,
+        temperature: 0.7
+      })
     });
 
-    const data = await groqRes.json();
-
-    if (data.error) {
-      return res.status(200).json({ reply: `API Error: ${data.error.message}` });
-    }
-
-    let reply = data.choices?.[0]?.message?.content || "No response received.";
+    const data = await response.json();
+    const reply = data.choices?.[0]?.message?.content || "No response received.";
 
     return res.status(200).json({ reply });
-  } catch (err) {
-    return res.status(500).json({ reply: "Error connecting to server." });
+  } catch (error) {
+    return res.status(500).json({ error: "Failed to fetch response from Groq API." });
   }
 };
