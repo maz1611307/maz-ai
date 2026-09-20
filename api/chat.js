@@ -61,7 +61,7 @@ module.exports = async function handler(req, res) {
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            model: "gemma2-9b-it",
+            model: "openai/gpt-oss-120b / 20b",
             messages: [{ role: "user", content: message }]
           })
         });
