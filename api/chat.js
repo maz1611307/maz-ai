@@ -16,31 +16,19 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    // Check if the latest user message contains an image
-    const lastMessage = history[history.length - 1];
-    const isLatestImage = Array.isArray(lastMessage?.content);
+    const modelToUse = "openai/gpt-oss-20b";
 
-    // Active vision model on Groq
-    const modelToUse = isLatestImage ? "llama-3.2-11b-vision-instruct" : "llama-3.3-70b-versatile";
-
-    // Clean historical messages so base64 images from earlier turns don't break simple text chats
-    const cleanedHistory = history.map((msg, index) => {
-      if (index < history.length - 1 && Array.isArray(msg.content)) {
+    // Clean old history to convert image objects into simple text
+    const cleanedHistory = history.map((msg) => {
+      if (Array.isArray(msg.content)) {
         const textObj = msg.content.find(c => c.type === "text");
         return {
           role: msg.role,
-          content: textObj ? textObj.text : "[User sent an image]"
+          content: textObj ? textObj.text : "[Uploaded Content]"
         };
       }
       return msg;
     });
-
-    const systemInstruction = {
-      role: "system",
-      content: "You are a helpful and polite assistant. Provide clear and simple answers. Do not use complex markdown or LaTeX syntax."
-    };
-
-    const fullMessagesPayload = [systemInstruction, ...cleanedHistory];
 
     const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
@@ -50,7 +38,8 @@ module.exports = async function handler(req, res) {
       },
       body: JSON.stringify({
         model: modelToUse,
-        messages: fullMessagesPayload
+        messages: cleanedHistory,
+        reasoning_effort: "medium"
       })
     });
 
