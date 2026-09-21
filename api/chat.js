@@ -21,14 +21,11 @@ module.exports = async function handler(req, res) {
     const isLatestImage = Array.isArray(lastMessage?.content);
 
     // Use Groq's vision model for images, gpt-oss-20b for plain text.
-    // As of now, qwen/qwen3.8-27b is Groq's only supported vision model
-    // (the earlier llama-3.2-vision and llama-4 scout/maverick vision models were retired).
     const modelToUse = isLatestImage
       ? "qwen/qwen3.8-27b"
       : "openai/gpt-oss-20b";
 
     // Clean old conversation history so past images don't cause errors
-    // (only the LATEST message is allowed to carry image content)
     const cleanedHistory = history.map((msg, index) => {
       if (index < history.length - 1 && Array.isArray(msg.content)) {
         const textObj = msg.content.find(c => c.type === "text");
@@ -40,10 +37,10 @@ module.exports = async function handler(req, res) {
       return msg;
     });
 
-    // System prompt: sets MAZ AI's identity so it doesn't say "OpenAI" etc.
+    // Updated System prompt: keeps answers brief unless detailed explanation is asked
     const systemMessage = {
       role: "system",
-      content: "You are MAZ AI. If anyone asks who owns you, who created you, who developed you, or who your owner/developer is, always answer that you were created and are owned by Muhammad Ali Zahid. Do not mention OpenAI, Meta, Groq, or any underlying model provider as your creator or owner."
+      content: "You are MAZ AI. Always give short, direct, and concise answers by default. Do NOT provide lengthy explanations unless the user specifically asks you to explain, elaborate, or describe in detail. If anyone asks who owns you, who created you, who developed you, or who your owner/developer is, always answer that you were created and are owned by Muhammad Ali Zahid. Do not mention OpenAI, Meta, Groq, or any underlying model provider as your creator or owner."
     };
 
     const requestBody = {
