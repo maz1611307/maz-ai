@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content" />
   <title>MAZ AI</title>
 
   <!-- Round Purple M Tab Icon -->
@@ -19,12 +19,11 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
 
-    html, body { height: 100%; }
+    html, body { height: 100%; width: 100%; }
     body {
       background-color: #0f0f13; color: #e2e8f0;
       height: 100vh; height: 100dvh;
       display: flex; flex-direction: row; overflow: hidden;
-      padding-bottom: env(safe-area-inset-bottom, 0px);
     }
 
     /* Login Screen Overlay */
@@ -161,7 +160,7 @@
       text-overflow: ellipsis;
     }
 
-    /* Popup Context Menu & Plus Attach Menu */
+    /* Context Menus */
     .context-menu, .attach-menu {
       position: fixed;
       background: #1c1829;
@@ -200,29 +199,28 @@
     /* Main Workspace */
     .main-workspace { flex: 1; display: flex; flex-direction: column; height: 100%; width: 100%; min-height: 0; }
 
-    header { display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; border-bottom: 1px solid #2e2342; }
+    header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid #2e2342; }
     .brand-group { display: flex; align-items: center; gap: 12px; }
     .toggle-sidebar-btn { background: transparent; border: none; color: #c084fc; font-size: 22px; cursor: pointer; padding: 4px 8px; border-radius: 6px; }
     .toggle-sidebar-btn:hover { background: #271f38; }
     .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 20px; color: #c084fc; }
 
     .top-new-chat-btn {
-      background-color: #7c3aed; color: white; border: none; width: 40px; height: 40px;
-      border-radius: 50%; font-size: 24px; cursor: pointer; display: flex; align-items: center;
+      background-color: #7c3aed; color: white; border: none; width: 38px; height: 38px;
+      border-radius: 50%; font-size: 22px; cursor: pointer; display: flex; align-items: center;
       justify-content: center; font-weight: 300; transition: background 0.2s;
     }
     .top-new-chat-btn:hover { background-color: #6d28d9; }
 
     #chat-container {
-      flex: 1; min-height: 0; overflow-y: auto; padding: 20px 16px; display: flex; flex-direction: column;
-      gap: 20px; max-width: 850px; width: 100%; margin: 0 auto;
+      flex: 1; min-height: 0; overflow-y: auto; padding: 16px; display: flex; flex-direction: column;
+      gap: 16px; max-width: 850px; width: 100%; margin: 0 auto;
       scrollbar-width: thin; scrollbar-color: #3b2164 #0f0f13;
     }
 
     #chat-container::-webkit-scrollbar { width: 6px; }
     #chat-container::-webkit-scrollbar-track { background: transparent; }
     #chat-container::-webkit-scrollbar-thumb { background: #3b2164; border-radius: 10px; }
-    #chat-container::-webkit-scrollbar-thumb:hover { background: #7c3aed; }
 
     .welcome-placeholder {
       margin: auto; display: flex; flex-direction: column; align-items: center;
@@ -231,55 +229,61 @@
     .welcome-placeholder h1 { font-size: 32px; font-weight: 700; color: #c084fc; letter-spacing: 0.5px; }
     .welcome-placeholder p { font-size: 15px; color: #94a3b8; }
 
-    .message.user { align-self: flex-end; background-color: #2a1b4e; color: #f3e8ff; border: 1px solid #581c87; padding: 10px 18px; border-radius: 22px; max-width: 80%; font-size: 15px; }
-    .message.assistant { align-self: flex-start; color: #e2e8f0; padding: 4px 0; width: 100%; font-size: 15px; line-height: 1.6; position: relative; }
+    .message.user { align-self: flex-end; background-color: #2a1b4e; color: #f3e8ff; border: 1px solid #581c87; padding: 10px 16px; border-radius: 20px; max-width: 85%; font-size: 15px; }
+    .message.assistant { align-self: flex-start; color: #e2e8f0; padding: 4px 0; width: 100%; font-size: 15px; line-height: 1.6; }
 
     .message.assistant strong, .message.assistant b { color: #c084fc; font-weight: 600; }
     .message.assistant ul { margin: 6px 0 6px 20px; padding: 0; }
     .message.assistant li { margin-bottom: 4px; }
     .message.assistant code:not(.code-table code) { background-color: #271f38; color: #d8b4fe; padding: 2px 6px; border-radius: 6px; font-size: 13px; }
 
-    /* Code Block Styling */
+    /* Code Blocks */
     .code-block-wrapper {
       background-color: #1e1e24; border: 1px solid #322d48; border-radius: 10px; margin: 12px 0; overflow: hidden; font-family: 'Consolas', 'Courier New', monospace;
     }
     .code-header { display: flex; justify-content: space-between; align-items: center; background-color: #18181c; padding: 8px 14px; border-bottom: 1px solid #2e2840; font-size: 13px; color: #94a3b8; }
-    .code-copy-btn { background-color: #2e2840; color: #e2e8f0; border: 1px solid #4c3b6e; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; transition: background 0.2s; }
-    .code-copy-btn:hover { background-color: #4c1d95; }
+    .code-copy-btn { background-color: #2e2840; color: #e2e8f0; border: 1px solid #4c3b6e; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; }
     .code-scroll-area { overflow-x: auto; padding: 10px 0; }
     .code-table { border-collapse: collapse; width: 100%; font-size: 14px; line-height: 1.5; }
     .code-table td { padding: 0; vertical-align: top; }
     .line-numbers { user-select: none; text-align: right; color: #4a5568; padding-right: 14px; padding-left: 12px; border-right: 1px solid #2d2d38; width: 40px; }
     .code-content { padding-left: 14px; padding-right: 14px; white-space: pre; color: #abb2bf; }
 
-    .speak-btn { background: transparent; border: none; color: #a78bfa; cursor: pointer; font-size: 16px; margin-top: 6px; display: inline-flex; align-items: center; gap: 4px; }
-    .speak-btn:hover { color: #c084fc; }
-    .chat-img { max-width: 250px; max-height: 250px; border-radius: 12px; display: block; margin-bottom: 8px; border: 1px solid #7c3aed; object-fit: cover; }
+    .speak-btn { background: transparent; border: none; color: #a78bfa; cursor: pointer; font-size: 15px; margin-top: 6px; display: inline-flex; align-items: center; gap: 4px; }
+    .chat-img { max-width: 220px; max-height: 220px; border-radius: 12px; display: block; margin-bottom: 8px; border: 1px solid #7c3aed; object-fit: cover; }
 
-    footer { padding: 12px 16px calc(16px + env(safe-area-inset-bottom, 0px)) 16px; max-width: 850px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
-    .input-card { display: flex; flex-direction: column; background-color: #1a1625; border: 1px solid #4c1d95; border-radius: 24px; padding: 10px 14px; gap: 8px; }
+    footer { padding: 10px 14px 12px 14px; max-width: 850px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+    .input-card { display: flex; flex-direction: column; background-color: #1a1625; border: 1px solid #4c1d95; border-radius: 20px; padding: 8px 12px; gap: 6px; }
 
     #image-preview-container { display: none; position: relative; width: fit-content; margin-bottom: 4px; }
-    #image-preview { max-width: 90px; max-height: 90px; border-radius: 10px; border: 1px solid #7c3aed; object-fit: cover; }
+    #image-preview { max-width: 80px; max-height: 80px; border-radius: 10px; border: 1px solid #7c3aed; object-fit: cover; }
     #remove-image-btn { position: absolute; top: -6px; right: -6px; background: #ef4444; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
     .input-row { display: flex; align-items: center; gap: 10px; }
-    input[type="text"] { flex: 1; background: transparent; border: none; outline: none; color: #f3e8ff; font-size: 15px; }
+    
+    /* Disabled browser autofill popups */
+    input[type="text"] {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #f3e8ff;
+      font-size: 15px;
+    }
 
     .actions-row { display: flex; align-items: center; justify-content: space-between; }
     .actions-left { display: flex; align-items: center; gap: 8px; position: relative; }
     .icon-btn { background: transparent; border: none; color: #c084fc; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 4px; }
-    .icon-btn svg { fill: currentColor; }
     .icon-btn.recording { color: #ef4444; animation: pulse 1s infinite; }
 
     @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
 
-    .think-btn { display: flex; align-items: center; gap: 6px; background-color: #271f38; border: 1px solid #4c1d95; color: #d8b4fe; padding: 6px 12px; border-radius: 20px; font-size: 13px; cursor: pointer; }
+    .think-btn { display: flex; align-items: center; gap: 6px; background-color: #271f38; border: 1px solid #4c1d95; color: #d8b4fe; padding: 5px 10px; border-radius: 16px; font-size: 13px; cursor: pointer; }
     .think-btn.active { background-color: #7c3aed; color: white; }
 
-    .send-arrow-btn { background-color: #8b5cf6; color: white; border: none; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; line-height: 1; }
+    .send-arrow-btn { background-color: #8b5cf6; color: white; border: none; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; line-height: 1; }
     .send-arrow-btn:hover { background-color: #7c3aed; }
-    .disclaimer-text { text-align: center; font-size: 12px; color: #64748b; }
+    .disclaimer-text { text-align: center; font-size: 11px; color: #64748b; }
   </style>
 </head>
 <body>
@@ -308,13 +312,13 @@
     <div class="sidebar-user-footer" id="sidebar-user-footer">
       <img id="user-avatar-img" class="user-avatar" src="https://via.placeholder.com/36" alt="Profile" />
       <div class="user-info">
-        <span class="user-name" id="user-display-name">Guest User</span>
+        <span class="user-name" id="user-display-name">Muhammad Ali zahid</span>
         <span class="user-email" id="user-display-email">Not logged in</span>
       </div>
     </div>
   </div>
 
-  <!-- Popup Context Menu for History Items -->
+  <!-- Context Menu -->
   <div class="context-menu" id="context-menu">
     <div class="context-menu-item" onclick="renameCurrentSession()">✏️ Rename</div>
     <div class="context-menu-item delete" onclick="deleteCurrentSession()">🗑️ Delete</div>
@@ -351,7 +355,8 @@
         </div>
 
         <div class="input-row">
-          <input type="text" id="user-input" placeholder="Ask MAZ AI or paste image..." onkeydown="if(event.key==='Enter') sendMessage()" onpaste="handlePaste(event)" />
+          <!-- Added autocomplete="off" and data-lpignore="true" to disable Chrome autofill toolbar -->
+          <input type="text" id="user-input" name="search_prompt" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" placeholder="Ask MAZ AI..." onkeydown="if(event.key==='Enter') sendMessage()" onpaste="handlePaste(event)" />
         </div>
         <div class="actions-row">
           <div class="actions-left">
@@ -380,7 +385,7 @@
 
   <script>
     let currentUserEmail = localStorage.getItem('maz_user_email') || null;
-    let currentUserName = localStorage.getItem('maz_user_name') || 'Guest User';
+    let currentUserName = localStorage.getItem('maz_user_name') || 'Muhammad Ali zahid';
     let currentUserPicture = localStorage.getItem('maz_user_picture') || 'https://via.placeholder.com/36';
 
     let isThinkActive = false;
@@ -590,7 +595,7 @@
     function handleCredentialResponse(response) {
       const payload = jwt_decode(response.credential);
       currentUserEmail = payload.email;
-      currentUserName = payload.name || 'User';
+      currentUserName = payload.name || 'Muhammad Ali zahid';
       currentUserPicture = payload.picture || 'https://via.placeholder.com/36';
 
       localStorage.setItem('maz_user_email', currentUserEmail);
