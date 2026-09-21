@@ -16,11 +16,13 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    // Check if the latest message includes an image
     const lastMessage = history[history.length - 1];
-    const isLatestImage = Array.isArray(lastMessage?.content);
+    
+    // Check if the latest message includes image content
+    const isLatestImage = Array.isArray(lastMessage?.content) && 
+      lastMessage.content.some(item => item.type === "image_url");
 
-    // Use Groq's vision model for images, gpt-oss-20b for plain text.
+    // Use Groq's active vision model
     const modelToUse = isLatestImage
       ? "qwen/qwen3.8-27b"
       : "openai/gpt-oss-20b";
@@ -37,7 +39,6 @@ module.exports = async function handler(req, res) {
       return msg;
     });
 
-    // Updated System prompt: keeps answers brief unless detailed explanation is asked
     const systemMessage = {
       role: "system",
       content: "You are MAZ AI. Always give short, direct, and concise answers by default. Do NOT provide lengthy explanations unless the user specifically asks you to explain, elaborate, or describe in detail. If anyone asks who owns you, who created you, who developed you, or who your owner/developer is, always answer that you were created and are owned by Muhammad Ali Zahid. Do not mention OpenAI, Meta, Groq, or any underlying model provider as your creator or owner."
@@ -48,7 +49,7 @@ module.exports = async function handler(req, res) {
       messages: [systemMessage, ...cleanedHistory]
     };
 
-    // reasoning_effort is only supported by gpt-oss-20b
+    // reasoning_effort is only supported on text reasoning models
     if (!isLatestImage) {
       requestBody.reasoning_effort = "medium";
     }
