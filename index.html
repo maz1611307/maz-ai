@@ -268,12 +268,68 @@
     let recognition = null;
     let isRecording = false;
 
+    // Get key name for local storage based on logged in user
+    function getStorageKey() {
+      return currentUserEmail ? `maz_chat_history_${currentUserEmail}` : 'maz_chat_history_guest';
+    }
+
+    // Save history array to local storage
+    function saveHistory() {
+      localStorage.setItem(getStorageKey(), JSON.stringify(chatHistory));
+    }
+
+    // Load saved history from local storage
+    function loadHistory() {
+      const saved = localStorage.getItem(getStorageKey());
+      if (saved) {
+        try {
+          chatHistory = JSON.parse(saved);
+          renderLoadedHistory();
+        } catch (e) {
+          chatHistory = [];
+          renderEmptyState();
+        }
+      } else {
+        chatHistory = [];
+        renderEmptyState();
+      }
+    }
+
+    // Render all saved messages on load
+    function renderLoadedHistory() {
+      const container = document.getElementById('chat-container');
+      container.innerHTML = '';
+
+      if (chatHistory.length === 0) {
+        renderEmptyState();
+        return;
+      }
+
+      chatHistory.forEach(item => {
+        let text = '';
+        let image = null;
+
+        if (Array.isArray(item.content)) {
+          const textObj = item.content.find(c => c.type === 'text');
+          const imgObj = item.content.find(c => c.type === 'image_url');
+          if (textObj) text = textObj.text;
+          if (imgObj && imgObj.image_url) image = imgObj.image_url.url;
+        } else {
+          text = item.content;
+        }
+
+        addMessageToUI(item.role, text, image, false);
+      });
+
+      container.scrollTop = container.scrollHeight;
+    }
+
     if (currentUserEmail) {
       document.getElementById('login-overlay').style.display = 'none';
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-      renderEmptyState();
+      loadHistory();
       setupSpeechRecognition();
     });
 
@@ -296,6 +352,7 @@
       currentUserEmail = responsePayload.email;
       localStorage.setItem('maz_user_email', currentUserEmail);
       document.getElementById('login-overlay').style.display = 'none';
+      loadHistory();
     }
 
     function toggleThink() {
@@ -306,6 +363,7 @@
     function clearChat() {
       window.speechSynthesis.cancel();
       chatHistory = [];
+      saveHistory();
       removeSelectedImage();
       renderEmptyState();
     }
@@ -489,7 +547,7 @@
       return formattedHtml;
     }
 
-    function addMessageToUI(role, text, image) {
+    function addMessageToUI(role, text, image, autoScroll = true) {
       const container = document.getElementById('chat-container');
       const placeholder = document.getElementById('welcome-placeholder');
       if (placeholder) placeholder.remove();
@@ -524,7 +582,9 @@
       }
 
       container.appendChild(div);
-      container.scrollTop = container.scrollHeight;
+      if (autoScroll) {
+        container.scrollTop = container.scrollHeight;
+      }
     }
 
     async function sendMessage() {
@@ -547,6 +607,7 @@
       }
 
       chatHistory.push(userMessageObj);
+      saveHistory();
 
       input.value = '';
       removeSelectedImage();
@@ -567,6 +628,7 @@
 
         addMessageToUI('assistant', replyText);
         chatHistory.push({ role: "assistant", content: replyText });
+        saveHistory();
 
       } catch (err) {
         addMessageToUI('assistant', "Error connecting to server.");
