@@ -24,7 +24,7 @@
       background-color: #0f0f13; color: #e2e8f0;
       height: 100vh;
       height: 100dvh;
-      display: flex; flex-direction: column; overflow: hidden;
+      display: flex; flex-direction: row; overflow: hidden;
       padding-bottom: env(safe-area-inset-bottom, 0px);
     }
 
@@ -37,6 +37,49 @@
     .login-card {
       background: #120d1d; border: 1px solid #4c1d95; padding: 40px; border-radius: 20px;
       text-align: center; display: flex; flex-direction: column; align-items: center; gap: 16px;
+    }
+
+    /* Sidebar History Styling */
+    .sidebar {
+      width: 260px;
+      background-color: #120d1d;
+      border-right: 1px solid #2e2342;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      flex-shrink: 0;
+    }
+    .sidebar-header {
+      padding: 16px;
+      border-bottom: 1px solid #2e2342;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .history-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .history-item {
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: #1a1625;
+      color: #94a3b8;
+      font-size: 14px;
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      border: 1px solid transparent;
+    }
+    .history-item:hover, .history-item.active {
+      background: #271f38;
+      color: #c084fc;
+      border-color: #581c87;
     }
 
     /* Main Workspace */
@@ -212,6 +255,14 @@
     </div>
   </div>
 
+  <!-- Sidebar History -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <span style="color: #c084fc; font-weight: 600;">Chat History</span>
+    </div>
+    <div class="history-list" id="history-list"></div>
+  </div>
+
   <div class="main-workspace">
     <header>
       <div class="brand">
@@ -221,7 +272,7 @@
         </svg>
         <span>MAZ AI</span>
       </div>
-      <button class="top-new-chat-btn" title="New Chat" onclick="clearChat()">+</button>
+      <button class="top-new-chat-btn" title="New Chat" onclick="createNewChat()">+</button>
     </header>
 
     <div id="chat-container"></div>
@@ -265,38 +316,74 @@
     let isThinkActive = false;
     let selectedImageBase64 = null;
     let chatHistory = [];
+    let allSessions = [];
+    let currentSessionId = null;
     let recognition = null;
     let isRecording = false;
 
-    // Get key name for local storage based on logged in user
     function getStorageKey() {
-      return currentUserEmail ? `maz_chat_history_${currentUserEmail}` : 'maz_chat_history_guest';
+      return currentUserEmail ? `maz_sessions_${currentUserEmail}` : 'maz_sessions_guest';
     }
 
-    // Save history array to local storage
-    function saveHistory() {
-      localStorage.setItem(getStorageKey(), JSON.stringify(chatHistory));
+    function saveAllSessions() {
+      localStorage.setItem(getStorageKey(), JSON.stringify(allSessions));
+      renderSidebarHistory();
     }
 
-    // Load saved history from local storage
-    function loadHistory() {
+    function loadAllSessions() {
       const saved = localStorage.getItem(getStorageKey());
       if (saved) {
         try {
-          chatHistory = JSON.parse(saved);
-          renderLoadedHistory();
+          allSessions = JSON.parse(saved);
         } catch (e) {
-          chatHistory = [];
-          renderEmptyState();
+          allSessions = [];
         }
       } else {
-        chatHistory = [];
-        renderEmptyState();
+        allSessions = [];
+      }
+
+      renderSidebarHistory();
+      if (allSessions.length > 0) {
+        loadSession(allSessions[0].id);
+      } else {
+        createNewChat();
       }
     }
 
-    // Render all saved messages on load
-    function renderLoadedHistory() {
+    function createNewChat() {
+      window.speechSynthesis.cancel();
+      currentSessionId = Date.now().toString();
+      chatHistory = [];
+      removeSelectedImage();
+      renderEmptyState();
+      renderSidebarHistory();
+    }
+
+    function loadSession(id) {
+      window.speechSynthesis.cancel();
+      currentSessionId = id;
+      const session = allSessions.find(s => s.id === id);
+      if (session) {
+        chatHistory = session.history || [];
+        renderLoadedChat();
+      }
+      renderSidebarHistory();
+    }
+
+    function renderSidebarHistory() {
+      const listContainer = document.getElementById('history-list');
+      listContainer.innerHTML = '';
+
+      allSessions.forEach(session => {
+        const item = document.createElement('div');
+        item.className = `history-item ${session.id === currentSessionId ? 'active' : ''}`;
+        item.innerText = session.title || 'Untitled Chat';
+        item.onclick = () => loadSession(session.id);
+        listContainer.appendChild(item);
+      });
+    }
+
+    function renderLoadedChat() {
       const container = document.getElementById('chat-container');
       container.innerHTML = '';
 
@@ -329,7 +416,7 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-      loadHistory();
+      loadAllSessions();
       setupSpeechRecognition();
     });
 
@@ -352,20 +439,12 @@
       currentUserEmail = responsePayload.email;
       localStorage.setItem('maz_user_email', currentUserEmail);
       document.getElementById('login-overlay').style.display = 'none';
-      loadHistory();
+      loadAllSessions();
     }
 
     function toggleThink() {
       isThinkActive = !isThinkActive;
       document.getElementById('think-toggle').classList.toggle('active', isThinkActive);
-    }
-
-    function clearChat() {
-      window.speechSynthesis.cancel();
-      chatHistory = [];
-      saveHistory();
-      removeSelectedImage();
-      renderEmptyState();
     }
 
     function setupSpeechRecognition() {
@@ -461,28 +540,23 @@
       });
     }
 
-    // Fixed Markdown & Code Parser
     function renderMarkdown(rawText) {
       const blocks = [];
       
-      // Extract code blocks first
       let placeholderText = rawText.replace(/```([a-zA-Z0-9_+-]*)\n([\s\S]*?)```/g, (match, lang, code) => {
         const index = blocks.length;
         blocks.push({ lang: lang || 'code', code: code.trim() });
         return `___CODE_BLOCK_${index}___`;
       });
 
-      // Escape normal HTML
       let html = placeholderText
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
 
-      // Format bold and inline code
       html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
       html = html.replace(/`([^`]+)`/g, "<code>$1</code>");
 
-      // Format lists and lines
       const lines = html.split("\n");
       let formattedHtml = "";
       let inList = false;
@@ -508,7 +582,6 @@
       }
       if (inList) formattedHtml += "</ul>";
 
-      // Re-insert highlighted code blocks
       blocks.forEach((item, index) => {
         let highlightedCode = item.code;
         if (window.hljs) {
@@ -607,7 +680,20 @@
       }
 
       chatHistory.push(userMessageObj);
-      saveHistory();
+
+      // Save into sessions array
+      let existingSession = allSessions.find(s => s.id === currentSessionId);
+      if (!existingSession) {
+        existingSession = {
+          id: currentSessionId,
+          title: text.substring(0, 24) || "Image Chat",
+          history: chatHistory
+        };
+        allSessions.unshift(existingSession);
+      } else {
+        existingSession.history = chatHistory;
+      }
+      saveAllSessions();
 
       input.value = '';
       removeSelectedImage();
@@ -628,7 +714,8 @@
 
         addMessageToUI('assistant', replyText);
         chatHistory.push({ role: "assistant", content: replyText });
-        saveHistory();
+        existingSession.history = chatHistory;
+        saveAllSessions();
 
       } catch (err) {
         addMessageToUI('assistant', "Error connecting to server.");
