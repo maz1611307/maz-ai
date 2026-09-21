@@ -120,8 +120,49 @@
       background: #3b2164;
     }
 
-    /* Popup Context Menu */
-    .context-menu {
+    /* User Profile Footer in Sidebar */
+    .sidebar-user-footer {
+      padding: 14px 16px;
+      border-top: 1px solid #2e2342;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background-color: #120d1d;
+    }
+
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1px solid #7c3aed;
+    }
+
+    .user-info {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .user-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #e2e8f0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .user-email {
+      font-size: 12px;
+      color: #94a3b8;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Popup Context Menu & Plus Attach Menu */
+    .context-menu, .attach-menu {
       position: fixed;
       background: #1c1829;
       border: 1px solid #4c1d95;
@@ -135,7 +176,7 @@
       padding: 6px;
     }
 
-    .context-menu-item {
+    .context-menu-item, .attach-menu-item {
       padding: 10px 12px;
       font-size: 14px;
       color: #e2e8f0;
@@ -146,7 +187,7 @@
       border-radius: 8px;
     }
 
-    .context-menu-item:hover {
+    .context-menu-item:hover, .attach-menu-item:hover {
       background: #2e2342;
       color: #c084fc;
     }
@@ -226,7 +267,7 @@
     input[type="text"] { flex: 1; background: transparent; border: none; outline: none; color: #f3e8ff; font-size: 15px; }
 
     .actions-row { display: flex; align-items: center; justify-content: space-between; }
-    .actions-left { display: flex; align-items: center; gap: 8px; }
+    .actions-left { display: flex; align-items: center; gap: 8px; position: relative; }
     .icon-btn { background: transparent; border: none; color: #c084fc; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 4px; }
     .icon-btn svg { fill: currentColor; }
     .icon-btn.recording { color: #ef4444; animation: pulse 1s infinite; }
@@ -262,12 +303,27 @@
       <span style="color: #c084fc; font-weight: 600;">Chat History</span>
     </div>
     <div class="history-list" id="history-list"></div>
+
+    <!-- Account Details at Bottom -->
+    <div class="sidebar-user-footer" id="sidebar-user-footer">
+      <img id="user-avatar-img" class="user-avatar" src="https://via.placeholder.com/36" alt="Profile" />
+      <div class="user-info">
+        <span class="user-name" id="user-display-name">Guest User</span>
+        <span class="user-email" id="user-display-email">Not logged in</span>
+      </div>
+    </div>
   </div>
 
-  <!-- Popup Options Menu -->
+  <!-- Popup Context Menu for History Items -->
   <div class="context-menu" id="context-menu">
     <div class="context-menu-item" onclick="renameCurrentSession()">✏️ Rename</div>
     <div class="context-menu-item delete" onclick="deleteCurrentSession()">🗑️ Delete</div>
+  </div>
+
+  <!-- Plus Attachment Popup Menu -->
+  <div class="attach-menu" id="attach-menu">
+    <div class="attach-menu-item" onclick="openGallery()">🖼️ Gallery</div>
+    <div class="attach-menu-item" onclick="openCamera()">📷 Camera</div>
   </div>
 
   <div class="main-workspace">
@@ -299,8 +355,9 @@
         </div>
         <div class="actions-row">
           <div class="actions-left">
-            <button class="icon-btn" title="Add file" onclick="document.getElementById('file-input').click()">+</button>
-            <input type="file" id="file-input" accept="image/*" style="display: none;" onchange="handleImageSelect(event)" />
+            <button class="icon-btn" id="plus-attach-btn" title="Add Image" onclick="toggleAttachMenu(event)">+</button>
+            <input type="file" id="file-input-gallery" accept="image/*" style="display: none;" onchange="handleImageSelect(event)" />
+            <input type="file" id="file-input-camera" accept="image/*" capture="environment" style="display: none;" onchange="handleImageSelect(event)" />
 
             <button class="icon-btn" id="mic-btn" title="Speak" onclick="toggleVoiceInput()">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -323,6 +380,9 @@
 
   <script>
     let currentUserEmail = localStorage.getItem('maz_user_email') || null;
+    let currentUserName = localStorage.getItem('maz_user_name') || 'Guest User';
+    let currentUserPicture = localStorage.getItem('maz_user_picture') || 'https://via.placeholder.com/36';
+
     let isThinkActive = false;
     let selectedImageBase64 = null;
     let chatHistory = [];
@@ -332,6 +392,12 @@
     let recognition = null;
     let isRecording = false;
 
+    function updateProfileUI() {
+      document.getElementById('user-display-name').innerText = currentUserName;
+      document.getElementById('user-display-email').innerText = currentUserEmail || 'Not logged in';
+      document.getElementById('user-avatar-img').src = currentUserPicture;
+    }
+
     function getStorageKey() {
       return currentUserEmail ? `maz_sessions_${currentUserEmail}` : 'maz_sessions_guest';
     }
@@ -339,6 +405,31 @@
     function toggleSidebar() {
       const sidebar = document.getElementById('sidebar');
       sidebar.classList.toggle('closed');
+    }
+
+    function toggleAttachMenu(e) {
+      e.stopPropagation();
+      const menu = document.getElementById('attach-menu');
+      const btn = document.getElementById('plus-attach-btn');
+      const rect = btn.getBoundingClientRect();
+      
+      if (menu.style.display === 'flex') {
+        menu.style.display = 'none';
+      } else {
+        menu.style.display = 'flex';
+        menu.style.bottom = `${window.innerHeight - rect.top + 8}px`;
+        menu.style.left = `${rect.left}px`;
+      }
+    }
+
+    function openGallery() {
+      document.getElementById('attach-menu').style.display = 'none';
+      document.getElementById('file-input-gallery').click();
+    }
+
+    function openCamera() {
+      document.getElementById('attach-menu').style.display = 'none';
+      document.getElementById('file-input-camera').click();
     }
 
     function saveAllSessions() {
@@ -393,6 +484,7 @@
 
     document.addEventListener('click', () => {
       document.getElementById('context-menu').style.display = 'none';
+      document.getElementById('attach-menu').style.display = 'none';
     });
 
     function renameCurrentSession() {
@@ -476,6 +568,7 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
+      updateProfileUI();
       loadAllSessions();
       setupSpeechRecognition();
     });
@@ -495,10 +588,17 @@
     }
 
     function handleCredentialResponse(response) {
-      const responsePayload = jwt_decode(response.credential);
-      currentUserEmail = responsePayload.email;
+      const payload = jwt_decode(response.credential);
+      currentUserEmail = payload.email;
+      currentUserName = payload.name || 'User';
+      currentUserPicture = payload.picture || 'https://via.placeholder.com/36';
+
       localStorage.setItem('maz_user_email', currentUserEmail);
+      localStorage.setItem('maz_user_name', currentUserName);
+      localStorage.setItem('maz_user_picture', currentUserPicture);
+
       document.getElementById('login-overlay').style.display = 'none';
+      updateProfileUI();
       loadAllSessions();
     }
 
@@ -587,7 +687,8 @@
 
     function removeSelectedImage() {
       selectedImageBase64 = null;
-      document.getElementById('file-input').value = '';
+      document.getElementById('file-input-gallery').value = '';
+      document.getElementById('file-input-camera').value = '';
       document.getElementById('image-preview').src = '';
       document.getElementById('image-preview-container').style.display = 'none';
     }
