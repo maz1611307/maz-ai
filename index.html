@@ -1324,6 +1324,75 @@
         }
       }
     }
+        // ===== KEYBOARD SHORTCUTS =====
+    document.addEventListener('keydown', (e) => {
+      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+      const cmdOrCtrl = isMac ? e.metaKey : e.ctrlKey;
+      const input = document.getElementById('user-input');
+
+      // Ctrl/Cmd + K → Focus input
+      if (cmdOrCtrl && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        input.focus();
+        return;
+      }
+
+      // Ctrl/Cmd + N → New chat
+      if (cmdOrCtrl && e.key.toLowerCase() === 'n') {
+        e.preventDefault();
+        createNewChat();
+        input.focus();
+        return;
+      }
+
+      // Ctrl/Cmd + Shift + C → Copy last assistant reply
+      if (cmdOrCtrl && e.shiftKey && e.key.toLowerCase() === 'c') {
+        e.preventDefault();
+        const assistantMessages = document.querySelectorAll('.message.assistant');
+        if (assistantMessages.length > 0) {
+          const last = assistantMessages[assistantMessages.length - 1];
+          const text = last.innerText.replace(/🔊 Listen$/, '').trim();
+          navigator.clipboard.writeText(text).then(() => {
+            // Small toast
+            const toast = document.createElement('div');
+            toast.textContent = '✅ Copied last reply';
+            toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#7c3aed;color:white;padding:8px 16px;border-radius:999px;font-size:13px;z-index:9999;box-shadow:0 4px 20px rgba(124,58,237,0.5);';
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 1800);
+          });
+        }
+        return;
+      }
+
+      // Ctrl/Cmd + / → Show shortcuts help
+      if (cmdOrCtrl && e.key === '/') {
+        e.preventDefault();
+        alert(
+          '⌨️ MAZ AI Shortcuts\n\n' +
+          'Ctrl/Cmd + K — Focus input\n' +
+          'Ctrl/Cmd + N — New chat\n' +
+          'Ctrl/Cmd + Shift + C — Copy last reply\n' +
+          'Ctrl/Cmd + / — This menu\n' +
+          'Enter — Send message\n' +
+          'Shift + Enter — New line\n' +
+          'Esc — Clear input'
+        );
+        return;
+      }
+
+      // Esc → Clear input (or close sidebar if open)
+      if (e.key === 'Escape') {
+        const sidebar = document.getElementById('sidebar');
+        if (!sidebar.classList.contains('closed')) {
+          toggleSidebar();
+          return;
+        }
+        if (document.activeElement === input && input.value) {
+          input.value = '';
+          removeSelectedImage();
+        }
+      }
+    });
   </script>
 </body>
 </html>
