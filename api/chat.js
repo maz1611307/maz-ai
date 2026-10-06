@@ -22,10 +22,10 @@ module.exports = async function handler(req, res) {
     const isLatestImage = Array.isArray(lastMessage?.content) && 
       lastMessage.content.some(item => item.type === "image_url");
 
-    // FIXED: Using a real, working vision model from Groq
-    const modelToUse = isLatestImage
-      ? "qwen/qwen3.8-27b" 
-      : "llama-3.3-70b-versatile";
+   // Use Groq's currently working models
+const modelToUse = isLatestImage
+  ? "qwen/qwen3.6-27b"        // ✅ vision (preview — but works)
+  : "openai/gpt-oss-120b";     // ✅ text (production model)
 
     // Clean old conversation history so past images don't cause errors
     const cleanedHistory = history.map((msg, index) => {
@@ -48,11 +48,6 @@ module.exports = async function handler(req, res) {
       model: modelToUse,
       messages: [systemMessage, ...cleanedHistory]
     };
-
-    // Use instruct mode for faster responses when an image is sent
-    if (isLatestImage) {
-      requestBody.reasoning_effort = "none";
-    }
 
     const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
