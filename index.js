@@ -2,7 +2,8 @@ const express = require('express');
 const path = require('path');
 const app = express();
 
-app.use(express.json());
+// Increase the JSON limit for base64 images
+app.use(express.json({ limit: '10mb' })); 
 
 // Load API Handler
 const chatHandler = require('./api/chat.js');
