@@ -485,6 +485,11 @@
     .send-arrow-btn:active {
       transform: translateY(0) scale(0.96);
     }
+    .send-arrow-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
     .disclaimer-text { text-align: center; font-size: 11px; color: #64748b; }
 
     /* Mobile */
@@ -872,7 +877,6 @@
     window.addEventListener('DOMContentLoaded', () => {
       updateProfileUI();
 
-      // Always load sessions into sidebar (if logged in)
       if (currentUserEmail) {
         const saved = localStorage.getItem(getStorageKey());
         if (saved) {
@@ -886,9 +890,7 @@
         renderSidebarHistory();
       }
 
-      // Always start with a fresh blank chat
       createNewChat();
-
       setupSpeechRecognition();
     });
 
@@ -1030,12 +1032,11 @@
       }
     }
 
-     function processImageFile(file) {
+    function processImageFile(file) {
       const reader = new FileReader();
       reader.onload = function(e) {
         const img = new Image();
         img.onload = function() {
-          // Resize image to max 800px on longest side
           const MAX_SIZE = 800;
           let width = img.width;
           let height = img.height;
@@ -1058,7 +1059,6 @@
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, width, height);
 
-          // Compress to JPEG at 75% quality — small file, good enough for AI
           selectedImageBase64 = canvas.toDataURL('image/jpeg', 0.75);
 
           document.getElementById('image-preview').src = selectedImageBase64;
@@ -1194,11 +1194,18 @@
     }
 
     async function sendMessage() {
+      const sendBtn = document.querySelector('.send-arrow-btn');
+      if (sendBtn && sendBtn.disabled) return;
+      if (sendBtn) sendBtn.disabled = true;
+
       const input = document.getElementById('user-input');
       const text = input.value.trim();
       const imageToSend = selectedImageBase64;
 
-      if (!text && !imageToSend) return;
+      if (!text && !imageToSend) {
+        if (sendBtn) sendBtn.disabled = false;
+        return;
+      }
 
       addMessageToUI('user', text, imageToSend);
 
@@ -1229,8 +1236,7 @@
       input.value = '';
       removeSelectedImage();
 
-            try {
-        // 30-second timeout — prevents infinite hang
+      try {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 30000);
 
@@ -1254,14 +1260,13 @@
         existingSession.history = chatHistory;
         saveAllSessions();
 
-            } catch (err) {
+      } catch (err) {
         if (err.name === 'AbortError') {
           addMessageToUI('assistant', "⏱️ Request timed out. Try a smaller image or simpler question.");
         } else {
           addMessageToUI('assistant', "⚠️ Error connecting to server. Please try again.");
         }
-        // Re-enable the send button so user can try again
-        const sendBtn = document.querySelector('.send-arrow-btn');
+      } finally {
         if (sendBtn) sendBtn.disabled = false;
       }
     }
