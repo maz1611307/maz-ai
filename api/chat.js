@@ -3,11 +3,43 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { history, think } = req.body || {};
+   const { history, think } = req.body || {};
 
   if (!history || !Array.isArray(history) || history.length === 0) {
     return res.status(400).json({ error: 'History is empty or invalid.' });
   }
+
+  // ===== IMAGE GENERATION DETECTION =====
+  const lastMessage = history[history.length - 1];
+  let lastUserText = '';
+  if (typeof lastMessage.content === 'string') {
+    lastUserText = lastMessage.content;
+  } else if (Array.isArray(lastMessage.content)) {
+    const textObj = lastMessage.content.find(c => c.type === 'text');
+    if (textObj) lastUserText = textObj.text;
+  }
+
+  const imageKeywords = ['draw', 'generate image', 'create image', 'picture of', 'image of', 'illustrate', 'paint', 'sketch'];
+  const wantsImage = imageKeywords.some(kw => lastUserText.toLowerCase().includes(kw));
+  const isUploadedImage = Array.isArray(lastMessage?.content) &&
+    lastMessage.content.some(item => item.type === 'image_url');
+
+  if (wantsImage && !isUploadedImage) {
+    // Extract prompt (remove trigger words)
+    let prompt = lastUserText;
+    imageKeywords.forEach(kw => {
+      prompt = prompt.replace(new RegExp(kw, 'gi'), '');
+    });
+    prompt = prompt.trim() || lastUserText;
+
+    const encodedPrompt = encodeURIComponent(prompt);
+    const imageUrl = `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&model=flux&nologo=false`;
+
+    return res.status(200).json({
+      reply: `Here's your image of "${prompt}":\n\n![Generated Image](${imageUrl})`
+    });
+  }
+  // ===== END IMAGE GENERATION =====
 
   const groqApiKey = process.env.GROQ_API_KEY;
 
