@@ -871,13 +871,24 @@
 
     window.addEventListener('DOMContentLoaded', () => {
       updateProfileUI();
+
+      // Always load sessions into sidebar (if logged in)
       if (currentUserEmail) {
-        loadAllSessions();
+        const saved = localStorage.getItem(getStorageKey());
+        if (saved) {
+          try { allSessions = JSON.parse(saved); } catch (e) { allSessions = []; }
+        } else {
+          allSessions = [];
+        }
+        renderSidebarHistory();
       } else {
         allSessions = [];
         renderSidebarHistory();
-        createNewChat();
       }
+
+      // Always start with a fresh blank chat
+      createNewChat();
+
       setupSpeechRecognition();
     });
 
