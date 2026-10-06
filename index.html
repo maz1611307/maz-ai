@@ -152,6 +152,23 @@
       justify-content: space-between;
       align-items: center;
     }
+    .sidebar-close-btn {
+      background: transparent;
+      border: none;
+      color: #c084fc;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 4px 10px;
+      border-radius: 6px;
+      line-height: 1;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .sidebar-close-btn:hover,
+    .sidebar-close-btn:active {
+      background: #1a1a28;
+      color: #e9d5ff;
+    }
     .history-list {
       flex: 1;
       overflow-y: auto;
@@ -562,6 +579,7 @@
   <div class="sidebar closed" id="sidebar">
     <div class="sidebar-header">
       <span style="color: #c084fc; font-weight: 600;">Chat History</span>
+      <button class="sidebar-close-btn" onclick="toggleSidebar()" aria-label="Close sidebar">✕</button>
     </div>
     <div class="history-list" id="history-list"></div>
     <div class="sidebar-user-footer" id="sidebar-user-footer">
@@ -783,6 +801,10 @@
         renderLoadedChat();
       }
       renderSidebarHistory();
+      // Auto-close sidebar on mobile after picking a chat
+      if (window.innerWidth <= 600) {
+        document.getElementById('sidebar').classList.add('closed');
+      }
     }
 
     function openContextMenu(e, sessionId) {
