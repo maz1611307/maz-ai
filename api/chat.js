@@ -3,44 +3,11 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-   const { history, think } = req.body || {};
+  const { history, think } = req.body || {};
 
   if (!history || !Array.isArray(history) || history.length === 0) {
     return res.status(400).json({ error: 'History is empty or invalid.' });
   }
-
-  // ===== IMAGE GENERATION DETECTION =====
-  const lastMessage = history[history.length - 1];
-  let lastUserText = '';
-  if (typeof lastMessage.content === 'string') {
-    lastUserText = lastMessage.content;
-  } else if (Array.isArray(lastMessage.content)) {
-    const textObj = lastMessage.content.find(c => c.type === 'text');
-    if (textObj) lastUserText = textObj.text;
-  }
-
-  const imageKeywords = ['draw', 'generate image', 'create image', 'picture of', 'image of', 'illustrate', 'paint', 'sketch'];
-  const wantsImage = imageKeywords.some(kw => lastUserText.toLowerCase().includes(kw));
-  const isUploadedImage = Array.isArray(lastMessage?.content) &&
-    lastMessage.content.some(item => item.type === 'image_url');
-
-  if (wantsImage && !isUploadedImage) {
-    // Extract prompt (remove trigger words)
-    let prompt = lastUserText;
-    imageKeywords.forEach(kw => {
-      prompt = prompt.replace(new RegExp(kw, 'gi'), '');
-    });
-    prompt = prompt.trim() || lastUserText;
-
-    const encodedPrompt = encodeURIComponent(prompt);
-    const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&model=flux&nologo=true`;
-
-        return res.status(200).json({
-      reply: `Here's your image of "${prompt}":\n\n![Generated Image](${imageUrl})`,
-      isImage: true
-    });
-  }
-  // ===== END IMAGE GENERATION =====
 
   const groqApiKey = process.env.GROQ_API_KEY;
 
@@ -51,13 +18,58 @@ module.exports = async function handler(req, res) {
   try {
     const lastMessage = history[history.length - 1];
 
-    const isLatestImage = Array.isArray(lastMessage?.content) &&
+    // Check if the latest message includes image content (uploaded image)
+    const isUploadedImage = Array.isArray(lastMessage?.content) &&
       lastMessage.content.some(item => item.type === "image_url");
 
-    const modelToUse = isLatestImage
+    // Extract last user text
+    let lastUserText = '';
+    if (typeof lastMessage.content === 'string') {
+      lastUserText = lastMessage.content;
+    } else if (Array.isArray(lastMessage.content)) {
+      const textObj = lastMessage.content.find(c => c.type === 'text');
+      if (textObj) lastUserText = textObj.text;
+    }
+
+    // ===== IMAGE GENERATION DETECTION =====
+    const imageKeywords = [
+      'draw', 'draw me', 'draw a', 'draw an',
+      'generate image', 'generate an image', 'generate a image',
+      'make an image', 'make image', 'make a image',
+      'create image', 'create an image', 'create a image',
+      'picture of', 'image of', 'picture a', 'image a',
+      'illustrate', 'paint', 'sketch',
+      'show me an image', 'show an image', 'show me a picture'
+    ];
+
+    const lowerText = lastUserText.toLowerCase();
+    const wantsImage = imageKeywords.some(kw => lowerText.includes(kw));
+
+    if (wantsImage && !isUploadedImage) {
+      // Extract prompt — remove trigger keywords
+      let prompt = lastUserText;
+      imageKeywords.forEach(kw => {
+        prompt = prompt.replace(new RegExp(kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), '');
+      });
+      prompt = prompt.replace(/^\s*[:\-]?\s*/, '').trim();
+      if (!prompt) prompt = lastUserText;
+
+      const encodedPrompt = encodeURIComponent(prompt);
+      const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&model=turbo&nologo=true`;
+
+      return res.status(200).json({
+        reply: `Here's your image of "${prompt}":\n\n![Generated Image](${imageUrl})`,
+        isImage: true
+      });
+    }
+    // ===== END IMAGE GENERATION =====
+
+    // Use Groq's vision model for uploaded images, text model otherwise
+    const modelToUse = isUploadedImage
       ? "qwen/qwen3.8-27b"
       : "openai/gpt-oss-120b";
 
+    // Clean old conversation history so past images don't cause errors
     const cleanedHistory = history.map((msg, index) => {
       if (index < history.length - 1 && Array.isArray(msg.content)) {
         const textObj = msg.content.find(c => c.type === "text");
