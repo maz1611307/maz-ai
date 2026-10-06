@@ -24,7 +24,7 @@ module.exports = async function handler(req, res) {
 
    // Use Groq's currently working models
 const modelToUse = isLatestImage
-  ? "qwen/qwen3.6-27b"        // ✅ vision (preview — but works)
+  ? "qwen/qwen3.8-27b"        // ✅ vision (preview — but works)
   : "openai/gpt-oss-120b";     // ✅ text (production model)
 
     // Clean old conversation history so past images don't cause errors
