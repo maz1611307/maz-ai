@@ -397,6 +397,20 @@
     .message.assistant li { margin-bottom: 4px; }
     .message.assistant code:not(.code-table code) { background-color: #1a1a28; color: #d8b4fe; padding: 2px 6px; border-radius: 6px; font-size: 13px; }
 
+    /* Generated Images — size constrained */
+    .generated-img {
+      max-width: 100%;
+      max-height: 380px;
+      width: auto;
+      height: auto;
+      border-radius: 14px;
+      margin: 12px 0;
+      border: 1px solid #7c3aed;
+      box-shadow: 0 4px 20px rgba(124, 58, 237, 0.3);
+      display: block;
+      object-fit: contain;
+    }
+
     /* Code Blocks */
     .code-block-wrapper {
       background-color: #14141e; border: 1px solid #2a2a3a; border-radius: 10px; margin: 12px 0; overflow: hidden; font-family: 'Consolas', 'Courier New', monospace;
@@ -520,6 +534,7 @@
       .sidebar.closed { margin-left: -260px; }
       .login-card { padding: 34px 24px; }
       .login-title { font-size: 22px; }
+      .generated-img { max-height: 300px; }
     }
   </style>
 </head>
@@ -801,7 +816,6 @@
         renderLoadedChat();
       }
       renderSidebarHistory();
-      // Auto-close sidebar on mobile after picking a chat
       if (window.innerWidth <= 600) {
         document.getElementById('sidebar').classList.add('closed');
       }
@@ -1116,7 +1130,8 @@
 
       let html = placeholderText.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
       html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-      html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width:100%;border-radius:14px;margin:12px 0;border:1px solid #7c3aed;box-shadow:0 4px 20px rgba(124,58,237,0.3);" />');
+      html = html.replace(/`([^`]+)`/g, "<code>$1</code>");
+      html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="generated-img" />');
 
       const lines = html.split("\n");
       let formattedHtml = "";
@@ -1258,9 +1273,23 @@
       input.value = '';
       removeSelectedImage();
 
+      // Detect image request for loading message
+      const imageKeywords = ['draw', 'generate image', 'create image', 'picture of', 'image of', 'illustrate', 'paint', 'sketch'];
+      const isImageRequest = imageKeywords.some(kw => text.toLowerCase().includes(kw));
+
+      let loadingMsgDiv = null;
+      if (isImageRequest && !imageToSend) {
+        const container = document.getElementById('chat-container');
+        loadingMsgDiv = document.createElement('div');
+        loadingMsgDiv.className = 'message assistant';
+        loadingMsgDiv.innerHTML = '<div style="color:#a78bfa;font-style:italic;">🎨 Generating your image... please wait (10-20 seconds)</div>';
+        container.appendChild(loadingMsgDiv);
+        container.scrollTop = container.scrollHeight;
+      }
+
       try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 30000);
+        const timeout = setTimeout(() => controller.abort(), 60000);
 
         const res = await fetch('/api/chat', {
           method: 'POST',
@@ -1290,6 +1319,9 @@
         }
       } finally {
         if (sendBtn) sendBtn.disabled = false;
+        if (loadingMsgDiv && loadingMsgDiv.parentNode) {
+          loadingMsgDiv.remove();
+        }
       }
     }
   </script>
