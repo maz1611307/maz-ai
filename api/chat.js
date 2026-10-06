@@ -33,10 +33,11 @@ module.exports = async function handler(req, res) {
     prompt = prompt.trim() || lastUserText;
 
     const encodedPrompt = encodeURIComponent(prompt);
-    const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&model=turbo&nologo=true`;
+    const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&model=flux&nologo=true`;
 
-    return res.status(200).json({
-      reply: `Here's your image of "${prompt}":\n\n![Generated Image](${imageUrl})`
+        return res.status(200).json({
+      reply: `Here's your image of "${prompt}":\n\n![Generated Image](${imageUrl})`,
+      isImage: true
     });
   }
   // ===== END IMAGE GENERATION =====
