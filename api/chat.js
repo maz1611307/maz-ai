@@ -22,10 +22,10 @@ module.exports = async function handler(req, res) {
     const isLatestImage = Array.isArray(lastMessage?.content) && 
       lastMessage.content.some(item => item.type === "image_url");
 
-    // Use Groq's active vision model
+    // FIXED: Using a real, working vision model from Groq
     const modelToUse = isLatestImage
-      ? "qwen/qwen3.8-27b"
-      : "openai/gpt-oss-20b";
+      ? "qwen/qwen3.8-27b" 
+      : "llama-3.3-70b-versatile";
 
     // Clean old conversation history so past images don't cause errors
     const cleanedHistory = history.map((msg, index) => {
@@ -49,9 +49,9 @@ module.exports = async function handler(req, res) {
       messages: [systemMessage, ...cleanedHistory]
     };
 
-    // reasoning_effort is only supported on text reasoning models
-    if (!isLatestImage) {
-      requestBody.reasoning_effort = "medium";
+    // Use instruct mode for faster responses when an image is sent
+    if (isLatestImage) {
+      requestBody.reasoning_effort = "none";
     }
 
     const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -73,6 +73,7 @@ module.exports = async function handler(req, res) {
 
     return res.status(200).json({ reply });
   } catch (err) {
+    console.error('Chat handler error:', err);
     return res.status(500).json({ reply: "Error connecting to server." });
   }
 };
