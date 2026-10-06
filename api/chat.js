@@ -3,7 +3,7 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { history } = req.body || {};
+  const { history, think } = req.body || {};
 
   if (!history || !Array.isArray(history) || history.length === 0) {
     return res.status(400).json({ error: 'History is empty or invalid.' });
@@ -17,17 +17,14 @@ module.exports = async function handler(req, res) {
 
   try {
     const lastMessage = history[history.length - 1];
-    
-    // Check if the latest message includes image content
-    const isLatestImage = Array.isArray(lastMessage?.content) && 
+
+    const isLatestImage = Array.isArray(lastMessage?.content) &&
       lastMessage.content.some(item => item.type === "image_url");
 
-   // Use Groq's currently working models
-const modelToUse = isLatestImage
-  ? "qwen/qwen3.8-27b"        // ✅ vision (preview — but works)
-  : "openai/gpt-oss-120b";     // ✅ text (production model)
+    const modelToUse = isLatestImage
+      ? "qwen/qwen3.8-27b"
+      : "openai/gpt-oss-120b";
 
-    // Clean old conversation history so past images don't cause errors
     const cleanedHistory = history.map((msg, index) => {
       if (index < history.length - 1 && Array.isArray(msg.content)) {
         const textObj = msg.content.find(c => c.type === "text");
@@ -39,9 +36,13 @@ const modelToUse = isLatestImage
       return msg;
     });
 
+    const basePrompt = "You are MAZ AI. If anyone asks who owns you, who created you, who developed you, or who your owner/developer is, always answer that you were created and are owned by Muhammad Ali Zahid. Do not mention OpenAI, Meta, Groq, or any underlying model provider as your creator or owner.";
+
     const systemMessage = {
       role: "system",
-      content: "You are MAZ AI. Always give short, direct, and concise answers by default. Do NOT provide lengthy explanations unless the user specifically asks you to explain, elaborate, or describe in detail. If anyone asks who owns you, who created you, who developed you, or who your owner/developer is, always answer that you were created and are owned by Muhammad Ali Zahid. Do not mention OpenAI, Meta, Groq, or any underlying model provider as your creator or owner."
+      content: think
+        ? basePrompt + " Think step by step. Show your reasoning clearly. Break complex problems into parts. Then give a final answer."
+        : basePrompt + " Always give short, direct, and concise answers by default. Do NOT provide lengthy explanations unless the user specifically asks you to explain, elaborate, or describe in detail."
     };
 
     const requestBody = {
