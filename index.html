@@ -21,7 +21,11 @@
 
     html, body { height: 100%; width: 100%; }
     body {
-      background-color: #0f0f13; color: #e2e8f0;
+      background-color: #0a0810;
+      background-image:
+        radial-gradient(circle at 20% 15%, rgba(124, 58, 237, 0.15), transparent 45%),
+        radial-gradient(circle at 80% 85%, rgba(168, 85, 247, 0.12), transparent 45%);
+      color: #e2e8f0;
       height: 100vh; height: 100dvh;
       display: flex; flex-direction: row; overflow: hidden;
     }
@@ -260,37 +264,66 @@
       box-shadow: 0 0 15px rgba(124, 58, 237, 0.6);
     }
 
-    /* Context Menus */
+    /* ===== Modern Floating Menus ===== */
     .context-menu, .attach-menu {
       position: fixed;
-      background: #1c1829;
-      border: 1px solid #4c1d95;
-      border-radius: 12px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-      width: 170px;
+      background: linear-gradient(180deg, rgba(30, 22, 48, 0.98) 0%, rgba(20, 15, 32, 0.98) 100%);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(139, 92, 246, 0.35);
+      border-radius: 14px;
+      box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.7),
+        0 0 30px rgba(124, 58, 237, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      width: 190px;
       z-index: 999;
       display: none;
       flex-direction: column;
       overflow: hidden;
       padding: 6px;
+      animation: menuPop 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes menuPop {
+      from { opacity: 0; transform: translateY(6px) scale(0.95); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
     }
     .context-menu-item, .attach-menu-item {
       padding: 10px 12px;
       font-size: 14px;
-      color: #e2e8f0;
+      color: #cbd5e1;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       cursor: pointer;
-      border-radius: 8px;
+      border-radius: 10px;
+      transition: all 0.18s;
+      font-weight: 500;
+    }
+    .context-menu-item svg, .attach-menu-item svg {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      stroke-width: 2;
+      flex-shrink: 0;
+      transition: all 0.18s;
     }
     .context-menu-item:hover, .attach-menu-item:hover {
-      background: #2e2342;
-      color: #c084fc;
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.25) 0%, rgba(168, 85, 247, 0.15) 100%);
+      color: #e9d5ff;
+      transform: translateX(2px);
+    }
+    .context-menu-item:hover svg, .attach-menu-item:hover svg {
+      stroke: #c084fc;
+      filter: drop-shadow(0 0 6px rgba(192, 132, 252, 0.6));
     }
     .context-menu-item.delete:hover {
-      background: #450a0a;
-      color: #f87171;
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(220, 38, 38, 0.12) 100%);
+      color: #fca5a5;
+    }
+    .context-menu-item.delete:hover svg {
+      stroke: #f87171;
+      filter: drop-shadow(0 0 6px rgba(248, 113, 113, 0.6));
     }
 
     /* Main Workspace */
@@ -303,11 +336,32 @@
     .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 20px; color: #c084fc; }
 
     .top-new-chat-btn {
-      background-color: #7c3aed; color: white; border: none; width: 38px; height: 38px;
-      border-radius: 50%; font-size: 22px; cursor: pointer; display: flex; align-items: center;
-      justify-content: center; font-weight: 300; transition: background 0.2s;
+      background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+      color: white;
+      border: none;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      font-size: 22px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 300;
+      transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow:
+        0 4px 15px rgba(124, 58, 237, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.25);
     }
-    .top-new-chat-btn:hover { background-color: #6d28d9; }
+    .top-new-chat-btn:hover {
+      transform: translateY(-2px) scale(1.05);
+      box-shadow:
+        0 8px 25px rgba(124, 58, 237, 0.65),
+        inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    }
+    .top-new-chat-btn:active {
+      transform: translateY(0) scale(0.97);
+    }
 
     #chat-container {
       flex: 1; min-height: 0; overflow-y: auto; padding: 16px; display: flex; flex-direction: column;
@@ -372,11 +426,72 @@
 
     @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.15); } 100% { transform: scale(1); } }
 
-    .think-btn { display: flex; align-items: center; gap: 6px; background-color: #271f38; border: 1px solid #4c1d95; color: #d8b4fe; padding: 5px 10px; border-radius: 16px; font-size: 13px; cursor: pointer; }
-    .think-btn.active { background-color: #7c3aed; color: white; }
+    .think-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background-color: rgba(39, 31, 56, 0.6);
+      border: 1px solid rgba(76, 29, 149, 0.6);
+      color: #d8b4fe;
+      padding: 5px 10px 5px 8px;
+      border-radius: 16px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.22s;
+      font-family: inherit;
+    }
+    .think-btn svg {
+      width: 16px;
+      height: 16px;
+      stroke: currentColor;
+      stroke-width: 2;
+      transition: all 0.22s;
+    }
+    .think-btn:hover {
+      background-color: rgba(76, 29, 149, 0.3);
+      border-color: #7c3aed;
+      color: #e9d5ff;
+    }
+    .think-btn.active {
+      background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+      color: white;
+      border-color: transparent;
+      box-shadow:
+        0 0 20px rgba(124, 58, 237, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+    .think-btn.active svg {
+      filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.8));
+    }
 
-    .send-arrow-btn { background-color: #8b5cf6; color: white; border: none; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; line-height: 1; }
-    .send-arrow-btn:hover { background-color: #7c3aed; }
+    .send-arrow-btn {
+      background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+      color: white;
+      border: none;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow:
+        0 4px 12px rgba(139, 92, 246, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    }
+    .send-arrow-btn:hover {
+      transform: translateY(-1px) scale(1.06);
+      box-shadow:
+        0 6px 18px rgba(139, 92, 246, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    }
+    .send-arrow-btn:active {
+      transform: translateY(0) scale(0.96);
+    }
     .disclaimer-text { text-align: center; font-size: 11px; color: #64748b; }
 
     /* Mobile */
@@ -457,14 +572,42 @@
 
   <!-- ===== Context Menu ===== -->
   <div class="context-menu" id="context-menu">
-    <div class="context-menu-item" onclick="renameCurrentSession()">✏️ Rename</div>
-    <div class="context-menu-item delete" onclick="deleteCurrentSession()">🗑️ Delete</div>
+    <div class="context-menu-item" onclick="renameCurrentSession()">
+      <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 20h9"/>
+        <path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+      </svg>
+      Rename
+    </div>
+    <div class="context-menu-item delete" onclick="deleteCurrentSession()">
+      <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3 6 5 6 21 6"/>
+        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+        <path d="M10 11v6"/>
+        <path d="M14 11v6"/>
+        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+      </svg>
+      Delete
+    </div>
   </div>
 
   <!-- ===== Attachment Menu ===== -->
   <div class="attach-menu" id="attach-menu">
-    <div class="attach-menu-item" onclick="openGallery()">🖼️ Gallery</div>
-    <div class="attach-menu-item" onclick="openCamera()">📷 Camera</div>
+    <div class="attach-menu-item" onclick="openGallery()">
+      <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+        <circle cx="8.5" cy="8.5" r="1.5"/>
+        <polyline points="21 15 16 10 5 21"/>
+      </svg>
+      Gallery
+    </div>
+    <div class="attach-menu-item" onclick="openCamera()">
+      <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+        <circle cx="12" cy="13" r="4"/>
+      </svg>
+      Camera
+    </div>
   </div>
 
   <!-- ===== Main Workspace ===== -->
@@ -507,7 +650,11 @@
               </svg>
             </button>
             <button class="think-btn" id="think-toggle" onclick="toggleThink()">
-              🧠 <span>Think</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2z"/>
+                <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2z"/>
+              </svg>
+              <span>Think</span>
             </button>
           </div>
           <button class="send-arrow-btn" onclick="sendMessage()">➔</button>
@@ -576,7 +723,6 @@
     }
 
     function saveAllSessions() {
-      // Guests don't save — only logged-in users
       if (!currentUserEmail) {
         renderSidebarHistory();
         return;
