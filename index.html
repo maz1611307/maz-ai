@@ -1116,7 +1116,7 @@
 
       let html = placeholderText.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
       html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-      html = html.replace(/`([^`]+)`/g, "<code>$1</code>");
+      html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width:100%;border-radius:14px;margin:12px 0;border:1px solid #7c3aed;box-shadow:0 4px 20px rgba(124,58,237,0.3);" />');
 
       const lines = html.split("\n");
       let formattedHtml = "";
