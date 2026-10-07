@@ -463,7 +463,7 @@
     .line-numbers { user-select: none; text-align: right; color: #4a5568; padding-right: 14px; padding-left: 12px; border-right: 1px solid #2a2a3a; width: 40px; }
     .code-content { padding-left: 14px; padding-right: 14px; white-space: pre; color: #abb2bf; }
 
-    .speak-btn { background: transparent; border: none; color: #a78bfa; cursor: pointer; font-size: 15px; margin-top: 6px; display: inline-flex; align-items: center; gap: 4px; }
+    .speak-btn { background: transparent; border: none; color: #a78bfa; cursor: pointer; font-size: 15px; margin-top: 6px; margin-right: 8px; display: inline-flex; align-items: center; gap: 4px; }
     .chat-img { max-width: 220px; max-height: 220px; border-radius: 12px; display: block; margin-bottom: 8px; border: 1px solid #7c3aed; object-fit: cover; }
 
     footer { padding: 10px 14px 12px 14px; max-width: 850px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
@@ -550,6 +550,7 @@
       box-shadow:
         0 4px 12px rgba(139, 92, 246, 0.4),
         inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      position: relative;
     }
     .send-arrow-btn:hover {
       transform: translateY(-1px) scale(1.06);
@@ -565,6 +566,79 @@
       cursor: not-allowed;
       transform: none;
     }
+
+    /* ===== STOP BUTTON MODE ===== */
+    .send-arrow-btn.stop-mode {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      box-shadow:
+        0 4px 12px rgba(239, 68, 68, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+    .send-arrow-btn.stop-mode .arrow-icon {
+      display: none;
+    }
+    .send-arrow-btn.stop-mode::after {
+      content: '';
+      width: 12px;
+      height: 12px;
+      background: white;
+      border-radius: 2px;
+    }
+
+    /* ===== LOADING DOTS ===== */
+    .loading-dots {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 0;
+    }
+    .loading-dots span {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #c084fc;
+      animation: dotBounce 1.4s ease-in-out infinite;
+      box-shadow: 0 0 10px rgba(192, 132, 252, 0.6);
+    }
+    .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes dotBounce {
+      0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+      40%           { transform: scale(1.2); opacity: 1; }
+    }
+
+    /* ===== REGENERATE BUTTON ===== */
+    .regen-btn {
+      background: transparent;
+      border: 1px solid #2e2e44;
+      color: #a78bfa;
+      cursor: pointer;
+      font-size: 13px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      margin-top: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.22s;
+      font-family: inherit;
+    }
+    .regen-btn:hover {
+      background: rgba(124, 58, 237, 0.15);
+      border-color: #7c3aed;
+      color: #e9d5ff;
+      transform: translateY(-1px);
+    }
+    .regen-btn:active {
+      transform: translateY(0);
+    }
+    .regen-btn svg {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      stroke-width: 2;
+    }
+
     .disclaimer-text { text-align: center; font-size: 11px; color: #64748b; }
 
     /* Mobile */
@@ -764,7 +838,9 @@
               <span>Think</span>
             </button>
           </div>
-          <button class="send-arrow-btn" onclick="sendMessage()">➔</button>
+          <button class="send-arrow-btn" id="sendBtn" onclick="handleSendOrStop()">
+            <span class="arrow-icon">➔</span>
+          </button>
         </div>
       </div>
       <p class="disclaimer-text">MAZ is AI and can make mistakes.</p>
@@ -784,6 +860,8 @@
     let selectedMenuSessionId = null;
     let recognition = null;
     let isRecording = false;
+    let currentAbortController = null;
+    let isGenerating = false;
 
     // ===== COOKIE HELPERS for Google One Tap suppression =====
     function setSessionCookie() {
@@ -1294,8 +1372,24 @@
           speakBtn.innerHTML = '🔊 <span>Listen</span>';
           speakBtn.onclick = () => speakText(text);
 
+          const regenBtn = document.createElement('button');
+          regenBtn.className = 'regen-btn';
+          regenBtn.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 4 23 10 17 10"/>
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+            </svg>
+            Regenerate
+          `;
+          regenBtn.onclick = () => regenerateMessage();
+
+          const btnRow = document.createElement('div');
+          btnRow.style.cssText = 'display:flex;align-items:center;flex-wrap:wrap;';
+          btnRow.appendChild(speakBtn);
+          btnRow.appendChild(regenBtn);
+
           div.appendChild(wrapper);
-          div.appendChild(speakBtn);
+          div.appendChild(btnRow);
         } else {
           const textSpan = document.createElement('span');
           textSpan.textContent = text;
@@ -1307,66 +1401,125 @@
       if (autoScroll) container.scrollTop = container.scrollHeight;
     }
 
-    async function sendMessage() {
-      const sendBtn = document.querySelector('.send-arrow-btn');
-      if (sendBtn && sendBtn.disabled) return;
-      if (sendBtn) sendBtn.disabled = true;
+    // ===== HANDLE SEND OR STOP =====
+    function handleSendOrStop() {
+      if (isGenerating) {
+        if (currentAbortController) {
+          currentAbortController.abort();
+        }
+        isGenerating = false;
+        updateSendBtn();
+      } else {
+        sendMessage();
+      }
+    }
+
+    function updateSendBtn() {
+      const btn = document.getElementById('sendBtn');
+      if (!btn) return;
+      if (isGenerating) {
+        btn.classList.add('stop-mode');
+      } else {
+        btn.classList.remove('stop-mode');
+      }
+    }
+
+    // ===== REGENERATE =====
+    async function regenerateMessage() {
+      if (isGenerating) return;
+
+      let lastUserIdx = -1;
+      for (let i = chatHistory.length - 1; i >= 0; i--) {
+        if (chatHistory[i].role === 'user') {
+          lastUserIdx = i;
+          break;
+        }
+      }
+      if (lastUserIdx === -1) return;
+
+      chatHistory = chatHistory.slice(0, lastUserIdx + 1);
+
+      const session = allSessions.find(s => s.id === currentSessionId);
+      if (session) {
+        session.history = chatHistory;
+        saveAllSessions();
+      }
+
+      renderLoadedChat();
+      await sendMessage(true);
+    }
+
+    async function sendMessage(isRegenerate = false) {
+      if (isGenerating) return;
 
       const input = document.getElementById('user-input');
-      const text = input.value.trim();
-      const imageToSend = selectedImageBase64;
+      const text = isRegenerate ? '' : input.value.trim();
+      const imageToSend = isRegenerate ? null : selectedImageBase64;
 
-      if (!text && !imageToSend) {
-        if (sendBtn) sendBtn.disabled = false;
-        return;
+      if (!isRegenerate && !text && !imageToSend) return;
+
+      if (!isRegenerate) {
+        addMessageToUI('user', text, imageToSend);
+
+        let userMessageObj = { role: "user" };
+        if (imageToSend) {
+          userMessageObj.content = [
+            { type: "text", text: text || "What is in this image?" },
+            { type: "image_url", image_url: { url: imageToSend } }
+          ];
+        } else {
+          userMessageObj.content = text;
+        }
+        chatHistory.push(userMessageObj);
+
+        let existingSession = allSessions.find(s => s.id === currentSessionId);
+        if (!existingSession) {
+          existingSession = {
+            id: currentSessionId,
+            title: text.substring(0, 24) || "Image Chat",
+            history: chatHistory
+          };
+          allSessions.unshift(existingSession);
+        } else {
+          existingSession.history = chatHistory;
+        }
+        saveAllSessions();
+
+        input.value = '';
+        removeSelectedImage();
       }
 
-      addMessageToUI('user', text, imageToSend);
+      // ===== LOADING STATE =====
+      isGenerating = true;
+      updateSendBtn();
 
-      let userMessageObj = { role: "user" };
-      if (imageToSend) {
-        userMessageObj.content = [
-          { type: "text", text: text || "What is in this image?" },
-          { type: "image_url", image_url: { url: imageToSend } }
-        ];
-      } else {
-        userMessageObj.content = text;
-      }
-      chatHistory.push(userMessageObj);
-
-      let existingSession = allSessions.find(s => s.id === currentSessionId);
-      if (!existingSession) {
-        existingSession = {
-          id: currentSessionId,
-          title: text.substring(0, 24) || "Image Chat",
-          history: chatHistory
-        };
-        allSessions.unshift(existingSession);
-      } else {
-        existingSession.history = chatHistory;
-      }
-      saveAllSessions();
-
-      input.value = '';
-      removeSelectedImage();
+      const container = document.getElementById('chat-container');
 
       const imageKeywords = ['draw', 'generate image', 'create image', 'picture of', 'image of', 'illustrate', 'paint', 'sketch', 'make image', 'make an image'];
-      const isImageRequest = imageKeywords.some(kw => text.toLowerCase().includes(kw));
+      const lastUserContent = chatHistory[chatHistory.length - 1]?.content;
+      const lastUserText = typeof lastUserContent === 'string' ? lastUserContent : (lastUserContent?.find?.(c => c.type === 'text')?.text || '');
+      const isImageRequest = !imageToSend && imageKeywords.some(kw => lastUserText.toLowerCase().includes(kw));
 
-      let loadingMsgDiv = null;
-      if (isImageRequest && !imageToSend) {
-        const container = document.getElementById('chat-container');
-        loadingMsgDiv = document.createElement('div');
-        loadingMsgDiv.className = 'message assistant';
+      let loadingMsgDiv = document.createElement('div');
+      loadingMsgDiv.className = 'message assistant';
+
+      if (isImageRequest) {
         loadingMsgDiv.innerHTML = '<div style="color:#a78bfa;font-style:italic;">🎨 Generating your image... please wait (10-20 seconds)</div>';
-        container.appendChild(loadingMsgDiv);
-        container.scrollTop = container.scrollHeight;
+      } else {
+        loadingMsgDiv.innerHTML = `
+          <div class="loading-dots">
+            <span></span><span></span><span></span>
+          </div>
+        `;
       }
+      container.appendChild(loadingMsgDiv);
+      container.scrollTop = container.scrollHeight;
+
+      // ===== FETCH WITH ABORT =====
+      currentAbortController = new AbortController();
+      const timeout = setTimeout(() => currentAbortController.abort(), 60000);
 
       try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 60000);
-
         const res = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1375,29 +1528,36 @@
             user_email: currentUserEmail,
             think: isThinkActive
           }),
-          signal: controller.signal
+          signal: currentAbortController.signal
         });
 
         clearTimeout(timeout);
         const data = await res.json();
         const replyText = data.reply || "No response received.";
 
-        addMessageToUI('assistant', replyText);
+        if (loadingMsgDiv.parentNode) loadingMsgDiv.remove();
+
+        addMessageToUI('assistant', replyText, null, true);
         chatHistory.push({ role: "assistant", content: replyText });
-        existingSession.history = chatHistory;
-        saveAllSessions();
+
+        const existingSession = allSessions.find(s => s.id === currentSessionId);
+        if (existingSession) {
+          existingSession.history = chatHistory;
+          saveAllSessions();
+        }
 
       } catch (err) {
+        if (loadingMsgDiv.parentNode) loadingMsgDiv.remove();
+
         if (err.name === 'AbortError') {
-          addMessageToUI('assistant', "⏱️ Request timed out. Try a smaller image or simpler question.");
+          addMessageToUI('assistant', "⏹️ Stopped by user.");
         } else {
           addMessageToUI('assistant', "⚠️ Error connecting to server. Please try again.");
         }
       } finally {
-        if (sendBtn) sendBtn.disabled = false;
-        if (loadingMsgDiv && loadingMsgDiv.parentNode) {
-          loadingMsgDiv.remove();
-        }
+        isGenerating = false;
+        currentAbortController = null;
+        updateSendBtn();
       }
     }
 
@@ -1425,7 +1585,7 @@
         const assistantMessages = document.querySelectorAll('.message.assistant');
         if (assistantMessages.length > 0) {
           const last = assistantMessages[assistantMessages.length - 1];
-          const text = last.innerText.replace(/🔊 Listen$/, '').trim();
+          const text = last.innerText.replace(/🔊 Listen.*$/s, '').replace(/Regenerate$/,'').trim();
           navigator.clipboard.writeText(text).then(() => {
             const toast = document.createElement('div');
             toast.textContent = '✅ Copied last reply';
