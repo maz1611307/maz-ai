@@ -618,7 +618,8 @@
            data-client_id="38665812589-0h1ouegqmkh9ug7fehlj5seudglhf5rs.apps.googleusercontent.com"
            data-callback="handleCredentialResponse"
            data-auto_select="false"
-           data-cancel_on_tap_outside="true">
+           data-cancel_on_tap_outside="true"
+           data-skip_prompt_cookie="maz_session">
       </div>
       <div class="g_id_signin" data-type="standard" data-theme="filled_black" data-size="large" data-shape="pill" data-text="signin_with" data-logo_alignment="left"></div>
 
@@ -784,9 +785,18 @@
     let recognition = null;
     let isRecording = false;
 
-    // Hide login overlay on load if logged in
+    // ===== COOKIE HELPERS for Google One Tap suppression =====
+    function setSessionCookie() {
+      document.cookie = "maz_session=active; path=/; max-age=31536000; SameSite=Lax";
+    }
+    function clearSessionCookie() {
+      document.cookie = "maz_session=; path=/; max-age=0; SameSite=Lax";
+    }
+
+    // Hide login overlay on load if logged in + set cookie to suppress Google popup
     if (currentUserEmail) {
       document.documentElement.classList.add('maz-logged-in');
+      setSessionCookie();
     }
 
     function updateProfileUI() {
@@ -1033,6 +1043,7 @@
       localStorage.setItem('maz_user_picture', currentUserPicture);
 
       document.documentElement.classList.add('maz-logged-in');
+      setSessionCookie();
       document.getElementById('login-overlay').style.display = 'none';
       updateProfileUI();
       loadAllSessions();
@@ -1049,6 +1060,7 @@
       localStorage.removeItem('maz_user_picture');
 
       document.documentElement.classList.remove('maz-logged-in');
+      clearSessionCookie();
       document.getElementById('login-overlay').style.display = 'none';
       updateProfileUI();
       allSessions = [];
@@ -1058,6 +1070,7 @@
 
     function showLoginAgain() {
       document.documentElement.classList.remove('maz-logged-in');
+      clearSessionCookie();
       document.getElementById('login-overlay').style.display = 'flex';
     }
 
