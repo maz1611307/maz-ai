@@ -5,6 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content" />
   <title>MAZ AI</title>
 
+  <script>
+    // Check if user is already logged in BEFORE anything else
+    (function() {
+      if (localStorage.getItem('maz_user_email')) {
+        document.documentElement.classList.add('maz-logged-in');
+      }
+    })();
+  </script>
+
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' stop-color='%23c084fc'/><stop offset='100%25' stop-color='%23a855f7'/></linearGradient></defs><rect width='100' height='100' rx='22' fill='%230a0a0f'/><ellipse cx='50' cy='50' rx='35' ry='14' stroke='url(%23g)' stroke-width='2.5' fill='none' transform='rotate(-30 50 50)'/><ellipse cx='50' cy='50' rx='35' ry='14' stroke='url(%23g)' stroke-width='2.5' fill='none' transform='rotate(30 50 50)'/><ellipse cx='50' cy='50' rx='35' ry='14' stroke='url(%23g)' stroke-width='2.5' fill='none' transform='rotate(90 50 50)'/><path d='M 32 62 L 32 42 L 42 55 L 50 44 L 58 55 L 68 42 L 68 62' stroke='url(%23g)' stroke-width='5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>" />
 
   <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -22,6 +31,37 @@
       color: #e2e8f0;
       height: 100vh; height: 100dvh;
       display: flex; flex-direction: row; overflow: hidden;
+    }
+
+    /* Hide login overlay immediately if logged in (via html class) */
+    html.maz-logged-in #login-overlay {
+      display: none !important;
+    }
+
+    /* Hide Chrome autofill bar (white bar with icons) */
+    input::-webkit-contacts-auto-fill-button,
+    input::-webkit-credentials-auto-fill-button,
+    input::-webkit-credit-card-auto-fill-button,
+    input::-webkit-strong-password-auto-fill-button {
+      visibility: hidden !important;
+      display: none !important;
+      pointer-events: none !important;
+      position: absolute !important;
+      right: 0 !important;
+      opacity: 0 !important;
+    }
+
+    /* Remove search input decorations */
+    input[type="search"]::-webkit-search-decoration,
+    input[type="search"]::-webkit-search-cancel-button,
+    input[type="search"]::-webkit-search-results-button,
+    input[type="search"]::-webkit-search-results-decoration {
+      display: none;
+      -webkit-appearance: none;
+    }
+    input[type="search"] {
+      -webkit-appearance: none;
+      appearance: none;
     }
 
     /* ===== LOGIN SCREEN ===== */
@@ -397,7 +437,7 @@
     .message.assistant li { margin-bottom: 4px; }
     .message.assistant code:not(.code-table code) { background-color: #1a1a28; color: #d8b4fe; padding: 2px 6px; border-radius: 6px; font-size: 13px; }
 
-    /* Generated Images — size constrained */
+    /* Generated Images */
     .generated-img {
       max-width: 100%;
       max-height: 380px;
@@ -434,14 +474,18 @@
     #remove-image-btn { position: absolute; top: -6px; right: -6px; background: #ef4444; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
     .input-row { display: flex; align-items: center; gap: 10px; }
-    input[type="text"] {
+    #user-input {
       flex: 1;
       background: transparent;
       border: none;
       outline: none;
       color: #f3e8ff;
       font-size: 15px;
+      -webkit-appearance: none;
+      appearance: none;
+      font-family: inherit;
     }
+    #user-input::placeholder { color: #64748b; }
 
     .actions-row { display: flex; align-items: center; justify-content: space-between; }
     .actions-left { display: flex; align-items: center; gap: 8px; position: relative; }
@@ -572,7 +616,9 @@
 
       <div id="g_id_onload"
            data-client_id="38665812589-0h1ouegqmkh9ug7fehlj5seudglhf5rs.apps.googleusercontent.com"
-           data-callback="handleCredentialResponse">
+           data-callback="handleCredentialResponse"
+           data-auto_select="false"
+           data-cancel_on_tap_outside="true">
       </div>
       <div class="g_id_signin" data-type="standard" data-theme="filled_black" data-size="large" data-shape="pill" data-text="signin_with" data-logo_alignment="left"></div>
 
@@ -681,7 +727,21 @@
           <button id="remove-image-btn" onclick="removeSelectedImage()">✕</button>
         </div>
         <div class="input-row">
-          <input type="text" id="user-input" name="search_prompt" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" placeholder="Ask MAZ AI..." onkeydown="if(event.key==='Enter') sendMessage()" onpaste="handlePaste(event)" />
+          <input
+            type="search"
+            id="user-input"
+            name="maz_chat_input"
+            autocomplete="new-password"
+            autocorrect="off"
+            autocapitalize="off"
+            spellcheck="false"
+            data-lpignore="true"
+            data-form-type="other"
+            inputmode="text"
+            placeholder="Ask MAZ AI..."
+            onkeydown="if(event.key==='Enter') sendMessage()"
+            onpaste="handlePaste(event)"
+          />
         </div>
         <div class="actions-row">
           <div class="actions-left">
@@ -723,6 +783,11 @@
     let selectedMenuSessionId = null;
     let recognition = null;
     let isRecording = false;
+
+    // Hide login overlay on load if logged in
+    if (currentUserEmail) {
+      document.documentElement.classList.add('maz-logged-in');
+    }
 
     function updateProfileUI() {
       document.getElementById('user-display-name').innerText = currentUserName;
@@ -906,10 +971,6 @@
       container.scrollTop = container.scrollHeight;
     }
 
-    if (currentUserEmail) {
-      document.getElementById('login-overlay').style.display = 'none';
-    }
-
     window.addEventListener('DOMContentLoaded', () => {
       updateProfileUI();
 
@@ -971,6 +1032,7 @@
       localStorage.setItem('maz_user_name', currentUserName);
       localStorage.setItem('maz_user_picture', currentUserPicture);
 
+      document.documentElement.classList.add('maz-logged-in');
       document.getElementById('login-overlay').style.display = 'none';
       updateProfileUI();
       loadAllSessions();
@@ -986,6 +1048,7 @@
       localStorage.removeItem('maz_user_name');
       localStorage.removeItem('maz_user_picture');
 
+      document.documentElement.classList.remove('maz-logged-in');
       document.getElementById('login-overlay').style.display = 'none';
       updateProfileUI();
       allSessions = [];
@@ -994,6 +1057,7 @@
     }
 
     function showLoginAgain() {
+      document.documentElement.classList.remove('maz-logged-in');
       document.getElementById('login-overlay').style.display = 'flex';
     }
 
@@ -1273,8 +1337,7 @@
       input.value = '';
       removeSelectedImage();
 
-      // Detect image request for loading message
-      const imageKeywords = ['draw', 'generate image', 'create image', 'picture of', 'image of', 'illustrate', 'paint', 'sketch'];
+      const imageKeywords = ['draw', 'generate image', 'create image', 'picture of', 'image of', 'illustrate', 'paint', 'sketch', 'make image', 'make an image'];
       const isImageRequest = imageKeywords.some(kw => text.toLowerCase().includes(kw));
 
       let loadingMsgDiv = null;
@@ -1324,20 +1387,19 @@
         }
       }
     }
-        // ===== KEYBOARD SHORTCUTS =====
+
+    // ===== KEYBOARD SHORTCUTS =====
     document.addEventListener('keydown', (e) => {
       const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
       const cmdOrCtrl = isMac ? e.metaKey : e.ctrlKey;
       const input = document.getElementById('user-input');
 
-      // Ctrl/Cmd + K → Focus input
       if (cmdOrCtrl && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         input.focus();
         return;
       }
 
-      // Ctrl/Cmd + N → New chat
       if (cmdOrCtrl && e.key.toLowerCase() === 'n') {
         e.preventDefault();
         createNewChat();
@@ -1345,7 +1407,6 @@
         return;
       }
 
-      // Ctrl/Cmd + Shift + C → Copy last assistant reply
       if (cmdOrCtrl && e.shiftKey && e.key.toLowerCase() === 'c') {
         e.preventDefault();
         const assistantMessages = document.querySelectorAll('.message.assistant');
@@ -1353,7 +1414,6 @@
           const last = assistantMessages[assistantMessages.length - 1];
           const text = last.innerText.replace(/🔊 Listen$/, '').trim();
           navigator.clipboard.writeText(text).then(() => {
-            // Small toast
             const toast = document.createElement('div');
             toast.textContent = '✅ Copied last reply';
             toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#7c3aed;color:white;padding:8px 16px;border-radius:999px;font-size:13px;z-index:9999;box-shadow:0 4px 20px rgba(124,58,237,0.5);';
@@ -1364,7 +1424,6 @@
         return;
       }
 
-      // Ctrl/Cmd + / → Show shortcuts help
       if (cmdOrCtrl && e.key === '/') {
         e.preventDefault();
         alert(
@@ -1380,7 +1439,6 @@
         return;
       }
 
-      // Esc → Clear input (or close sidebar if open)
       if (e.key === 'Escape') {
         const sidebar = document.getElementById('sidebar');
         if (!sidebar.classList.contains('closed')) {
